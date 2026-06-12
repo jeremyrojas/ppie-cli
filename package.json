@@ -1,0 +1,39 @@
+{
+  "name": "promptpie",
+  "version": "0.1.0",
+  "description": "Manage and share AI coding skills across Claude Code, Codex CLI, and Cursor",
+  "author": "Jeremy Rojas",
+  "homepage": "https://docs.promptpie.dev/cli",
+  "bugs": {
+    "url": "https://github.com/jeremyrojas/ppie-cli/issues"
+  },
+  "repository": "git+https://github.com/jeremyrojas/ppie-cli.git",
+  "type": "module",
+  "bin": {
+    "ppie": "./bin/ppie.mjs",
+    "promptpie": "./bin/ppie.mjs"
+  },
+  "scripts": {
+    "test": "node --test __tests__/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "promptpie",
+    "prompt-pie",
+    "claude",
+    "codex",
+    "cursor",
+    "skills",
+    "ai",
+    "prompts"
+  ],
+  "license": "MIT"
+}
