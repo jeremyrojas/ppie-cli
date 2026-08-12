@@ -1,0 +1,13 @@
+{
+  "protocol": "promptpie.local/v1",
+  "requestId": "5b912e69-2884-4e12-aecf-7558a5f6350f",
+  "ok": true,
+  "type": "browser.poll",
+  "payload": {
+    "operation": {
+      "operationId": "056e2bc2-b86e-489d-9463-b6d41e58c80a",
+      "kind": "prompt.pull",
+      "promptId": "welcome"
+    }
+  }
+}

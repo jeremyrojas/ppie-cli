@@ -27,16 +27,32 @@ import {
   targetHelpSummary,
 } from '../lib/paths.mjs';
 import { createError } from '../lib/errors.mjs';
+import { getCompanionStatus, pairCompanion, runCompanion } from '../lib/companion.mjs';
+import { PRODUCTION_ORIGIN } from '../lib/protocol.mjs';
+import { pullPrompt, pushPrompt, readPromptInput, writePromptOutput } from '../lib/prompts.mjs';
 import { validateName } from '../lib/validate.mjs';
 import { existsSync, readFileSync } from 'fs';
+import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const RESET = '\x1b[0m';
 const PACKAGE = loadPackage();
-const { flags: FLAGS, args } = parseArgv(process.argv.slice(2));
+let FLAGS = defaultFlags();
+let args;
+try {
+  ({ flags: FLAGS, args } = parseArgv(process.argv.slice(2)));
+} catch (error) {
+  fail(error);
+}
 const cmd = args[0];
 const sub = args[1];
+
+if (cmd === '__companion') {
+  if (!process.env.PPIE_COMPANION_ORIGIN || !process.env.PPIE_COMPANION_VERSION) process.exit(2);
+  await runCompanion({ origin: process.env.PPIE_COMPANION_ORIGIN, version: process.env.PPIE_COMPANION_VERSION });
+  await new Promise(() => {});
+}
 
 if (cmd === '--version' || cmd === '-v' || cmd === '-V') {
   handleVersion();
@@ -56,6 +72,8 @@ if (FLAGS.dryRun && !supportsDryRun(cmd, sub)) {
   fail(createError('INVALID_OPTION', '--dry-run can only be used with "ppie skill rm", "ppie skill remove", "ppie skill link", or "ppie skill unlink".'));
 }
 
+validateOptionScope(cmd, sub);
+
 try {
   switch (cmd) {
     case 'init':
@@ -63,7 +81,15 @@ try {
       break;
 
     case 'status':
-      handleStatus();
+      await handleStatus();
+      break;
+
+    case 'pair':
+      await handlePair(args.slice(1));
+      break;
+
+    case 'prompt':
+      await handlePrompt(sub, args.slice(2));
       break;
 
     case 'doctor':
@@ -104,6 +130,9 @@ function handleHelp() {
       commands: [
         'ppie init',
         'ppie status',
+        'ppie pair [--origin <allowed-origin>] [--no-open]',
+        'ppie prompt push <file|-> [--expected-revision <id>]',
+        'ppie prompt pull <prompt-id> [--output <file>]',
         'ppie doctor',
         'ppie skill add <name>',
         'ppie skill import <name> <file>',
@@ -124,6 +153,10 @@ function handleHelp() {
         noColor: '--no-color',
         force: '--force',
         dryRun: '--dry-run',
+        origin: '--origin <allowed-origin>',
+        expectedRevision: '--expected-revision <id>',
+        output: '--output <file>',
+        noOpen: '--no-open',
       },
     });
     return;
@@ -175,11 +208,12 @@ function handleInit() {
   out(`Run ${BOLD('ppie skill add <name>')} to create your first skill.`);
 }
 
-function handleStatus() {
+async function handleStatus() {
   const status = getStatus();
+  const companion = await getCompanionStatus();
 
   if (FLAGS.json) {
-    writeJson(process.stdout, { ok: true, command: 'status', ...status });
+    writeJson(process.stdout, { ok: true, command: 'status', ...status, companion });
     return;
   }
 
@@ -205,6 +239,67 @@ function handleStatus() {
   } else {
     ok('No setup issues found');
   }
+  if (companion.running) {
+    out(`  Companion: ${companion.paired ? GREEN('paired') : YELLOW('waiting for browser')} on 127.0.0.1:${companion.port}`);
+  } else {
+    out(`  Companion: ${DIM('stopped')} (run ${BOLD('ppie pair')})`);
+  }
+}
+
+async function handlePair(rest) {
+  if (rest.length > 0) throw createError('INVALID_USAGE', 'Usage: ppie pair [--origin <allowed-origin>] [--no-open]');
+  const result = await pairCompanion({
+    origin: FLAGS.origin ?? PRODUCTION_ORIGIN,
+    executable: fileURLToPath(import.meta.url),
+    version: PACKAGE.version,
+  });
+  const opened = FLAGS.noOpen || process.env.PPIE_BROWSER_OPEN === '0' ? false : openBrowser(result.url);
+  if (FLAGS.json) {
+    writeJson(process.stdout, {
+      ok: true,
+      command: 'pair',
+      protocol: 'promptpie.local/v1',
+      origin: result.origin,
+      port: result.port,
+      expiresAt: result.expiresAt,
+      browserOpened: opened,
+    });
+    return;
+  }
+  ok(`${opened ? 'Opened' : 'Prepared'} Prompt Pie pairing in your browser.`);
+  out(`  Companion: ${DIM(`127.0.0.1:${result.port}`)}`);
+  out(`  Pairing expires: ${DIM(result.expiresAt)}`);
+  if (!opened) info('Open Prompt Pie in this browser and run the command again if pairing does not begin.');
+}
+
+async function handlePrompt(action, rest) {
+  if (action === 'push') {
+    if (rest.length !== 1) throw createError('INVALID_USAGE', 'Usage: ppie prompt push <file|-> [--expected-revision <id>] [--json]');
+    const result = await pushPrompt(readPromptInput(rest[0]), { expectedRevision: FLAGS.expectedRevision });
+    if (FLAGS.json) {
+      writeJson(process.stdout, { ok: true, command: 'prompt.push', prompt: result.prompt });
+      return;
+    }
+    ok(`Pushed prompt ${BOLD(result.prompt.id)}`);
+    out(`  Revision: ${DIM(result.prompt.revision)}`);
+    return;
+  }
+  if (action === 'pull') {
+    if (rest.length !== 1) throw createError('INVALID_USAGE', 'Usage: ppie prompt pull <prompt-id> [--output <file>] [--json]');
+    const result = await pullPrompt(rest[0]);
+    const output = writePromptOutput(result.prompt, FLAGS.output === '-' ? null : FLAGS.output);
+    if (FLAGS.json) {
+      writeJson(process.stdout, { ok: true, command: 'prompt.pull', prompt: result.prompt, output: FLAGS.output ?? null });
+      return;
+    }
+    if (FLAGS.output && FLAGS.output !== '-') {
+      ok(`Pulled prompt ${BOLD(result.prompt.id)} to ${FLAGS.output}`);
+    } else {
+      process.stdout.write(output);
+    }
+    return;
+  }
+  throw createError('INVALID_USAGE', 'Usage: ppie prompt <push|pull>');
 }
 
 function handleDoctor() {
@@ -619,6 +714,9 @@ ${BOLD('HOW IT WORKS')}
 ${BOLD('USAGE')}
   ppie init                              ${targetHelpSummary()}
   ppie status                            Show a quick local setup summary
+  ppie pair [--origin <origin>]          Pair the local companion with Prompt Pie
+  ppie prompt push <file|->              Push structured prompt JSON to the browser
+  ppie prompt pull <prompt-id>           Pull structured prompt JSON from the browser
   ppie doctor                            Diagnose local Prompt Pie setup issues
   ppie skill add <name>                  Create a new skill from template
   ppie skill import <name> <file>        Import an existing .md file as a skill
@@ -636,12 +734,19 @@ ${BOLD('GLOBAL OPTIONS')}
   --no-color                             Disable ANSI color output
   --force                                Allow ppie skill link to replace existing files or symlinks
   --dry-run                              Preview supported risky changes without mutating files
+  --origin <origin>                      Allow a Prompt Pie origin for pairing
+  --expected-revision <sha256>           Require this browser revision before push
+  --output <file>                        Write a pulled prompt to a new file
+  --no-open                              Prepare pairing without opening a system browser
 
 ${BOLD('TARGETS')}
   ${TARGET_NAMES.join(', ')}
 
 ${BOLD('EXAMPLES')}
   ppie init
+  ppie pair
+  ppie prompt push prompt.json
+  ppie prompt pull prompt-id --output prompt.json
   ppie skill add code-review
   ppie skill info code-review
   ppie skill link code-review ${formatTargetCommandArgs()}
@@ -689,11 +794,12 @@ function normalizeError(errorLike) {
 }
 
 function parseArgv(argv) {
-  const flags = { json: false, noColor: false, force: false, dryRun: false };
+  const flags = defaultFlags();
   const args = [];
   let parsingFlags = true;
 
-  for (const arg of argv) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
     if (parsingFlags && arg === '--') {
       parsingFlags = false;
       continue;
@@ -719,10 +825,60 @@ function parseArgv(argv) {
       continue;
     }
 
+    if (parsingFlags && arg === '--no-open') {
+      flags.noOpen = true;
+      continue;
+    }
+
+    if (parsingFlags && (arg === '--help' || arg === '--version')) {
+      args.push(arg);
+      continue;
+    }
+
+    const valueFlag = {
+      '--origin': 'origin',
+      '--expected-revision': 'expectedRevision',
+      '--output': 'output',
+    }[arg];
+    if (parsingFlags && valueFlag) {
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('--')) throw createError('INVALID_OPTION', `${arg} requires a value.`);
+      if (flags[valueFlag] !== undefined) throw createError('INVALID_OPTION', `${arg} may only be supplied once.`);
+      flags[valueFlag] = value;
+      index += 1;
+      continue;
+    }
+
+    if (parsingFlags && arg.startsWith('--')) throw createError('INVALID_OPTION', `Unknown option: ${arg}.`);
+
     args.push(arg);
   }
 
   return { flags, args };
+}
+
+function defaultFlags() {
+  return { json: false, noColor: false, force: false, dryRun: false, noOpen: false, origin: undefined, expectedRevision: undefined, output: undefined };
+}
+
+function validateOptionScope(command, action) {
+  if (FLAGS.origin !== undefined && command !== 'pair') fail(createError('INVALID_OPTION', '--origin can only be used with "ppie pair".'));
+  if (FLAGS.expectedRevision !== undefined && !(command === 'prompt' && action === 'push')) fail(createError('INVALID_OPTION', '--expected-revision can only be used with "ppie prompt push".'));
+  if (FLAGS.output !== undefined && !(command === 'prompt' && action === 'pull')) fail(createError('INVALID_OPTION', '--output can only be used with "ppie prompt pull".'));
+  if (FLAGS.noOpen && command !== 'pair') fail(createError('INVALID_OPTION', '--no-open can only be used with "ppie pair".'));
+}
+
+function openBrowser(url) {
+  const command = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'rundll32.exe' : 'xdg-open';
+  const args = process.platform === 'win32' ? ['url.dll,FileProtocolHandler', url] : [url];
+  try {
+    const child = spawn(command, args, { detached: true, stdio: 'ignore' });
+    child.on('error', () => {});
+    child.unref();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function loadPackage() {

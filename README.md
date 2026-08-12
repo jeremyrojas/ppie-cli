@@ -2,7 +2,7 @@
 
 `promptpie` is the npm package for the Prompt Pie CLI. The main command is `ppie`.
 
-Use it to keep AI coding skills in one local source of truth and link them into Claude Code, Codex, and Cursor.
+Use it to pair Prompt Pie with local prompt workflows and keep AI coding skills in one local source of truth.
 
 - Docs: https://docs.promptpie.dev/cli
 - Prompt Pie: https://promptpie.dev
@@ -43,6 +43,60 @@ The target files are symlinks, not copies, so every target points back to the sa
 
 ## Quick Start
 
+Pair the signed-out Prompt Pie browser with a local companion:
+
+```bash
+ppie pair
+```
+
+Push structured prompt JSON to the open browser:
+
+```bash
+ppie prompt push ./prompt.json
+```
+
+Pull a prompt from the browser:
+
+```bash
+ppie prompt pull welcome --output ./welcome.json
+```
+
+The local companion listens only on `127.0.0.1`, chooses a random port, and accepts the production browser origin `https://app.promptpie.dev`. For local web development, supply an explicit loopback origin:
+
+```bash
+ppie pair --origin http://localhost:3000
+```
+
+Automation and tests must suppress the system browser opener:
+
+```bash
+ppie pair --no-open
+```
+
+`PPIE_BROWSER_OPEN=0` provides the same test seam for subprocess harnesses.
+
+Pairing opens a short-lived, single-use browser link. Run `ppie status` to see whether the companion is running and paired.
+
+Prompt JSON contains `id`, `title`, and `content`. The CLI calculates its SHA-256 `revision`:
+
+```json
+{
+  "id": "welcome",
+  "title": "Welcome",
+  "content": "Say hello"
+}
+```
+
+Use an expected revision when a push must fail after a browser-side edit:
+
+```bash
+ppie prompt push ./prompt.json --expected-revision <sha256>
+```
+
+The versioned HTTP contract and security lifecycle are documented in [`docs/local-protocol-v1.md`](docs/local-protocol-v1.md).
+
+## Skill Setup
+
 Initialize the local directories once:
 
 ```bash
@@ -79,6 +133,9 @@ ppie skill list
 ```text
 ppie init
 ppie status
+ppie pair [--origin <allowed-origin>] [--no-open]
+ppie prompt push <file|-> [--expected-revision <sha256>]
+ppie prompt pull <prompt-id> [--output <file>]
 ppie doctor
 ppie skill add <name>
 ppie skill import <name> <file>
@@ -162,6 +219,9 @@ Most commands support `--json` for machine-readable output:
 
 ```bash
 ppie status --json
+ppie pair --json
+ppie prompt push prompt.json --json
+ppie prompt pull welcome --json
 ppie doctor --json
 ppie skill info code-review --json
 ppie skill link code-review codex claude --dry-run --json
@@ -174,9 +234,15 @@ ppie skill link code-review codex claude --dry-run --json
 --no-color  Disable ANSI color output
 --force     Allow ppie skill link to replace existing files or symlinks
 --dry-run   Preview supported risky changes without mutating files
+--origin <origin>              Allow an HTTPS or loopback development origin for pairing
+--expected-revision <sha256>   Require a browser revision before prompt push
+--output <file>                Write pulled prompt JSON to a new file
+--no-open                      Prepare pairing without opening a system browser
 ```
 
 `--force` is only valid with `ppie skill link`.
+
+The companion keeps its CLI-private token in a mode-`0600` state file and keeps browser session tokens in memory. Companion restart requires pairing again. Prompt contents remain in the browser during Wave 1; the CLI does not create local prompt source files or modify skill folders during prompt push and pull.
 
 ## Skill Names
 
