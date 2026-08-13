@@ -50,7 +50,11 @@ const sub = args[1];
 
 if (cmd === '__companion') {
   if (!process.env.PPIE_COMPANION_ORIGIN || !process.env.PPIE_COMPANION_VERSION) process.exit(2);
-  await runCompanion({ origin: process.env.PPIE_COMPANION_ORIGIN, version: process.env.PPIE_COMPANION_VERSION });
+  await runCompanion({
+    origin: process.env.PPIE_COMPANION_ORIGIN,
+    version: process.env.PPIE_COMPANION_VERSION,
+    clientName: process.env.PPIE_COMPANION_CLIENT_NAME,
+  });
   await new Promise(() => {});
 }
 
@@ -130,7 +134,7 @@ function handleHelp() {
       commands: [
         'ppie init',
         'ppie status',
-        'ppie pair [--origin <allowed-origin>] [--no-open]',
+        'ppie pair [--origin <allowed-origin>] [--client-name <display-name>] [--no-open]',
         'ppie prompt push <file|-> [--expected-revision <id>]',
         'ppie prompt pull <prompt-id> [--output <file>]',
         'ppie doctor',
@@ -157,6 +161,7 @@ function handleHelp() {
         expectedRevision: '--expected-revision <id>',
         output: '--output <file>',
         noOpen: '--no-open',
+        clientName: '--client-name <display-name>',
       },
     });
     return;
@@ -247,11 +252,12 @@ async function handleStatus() {
 }
 
 async function handlePair(rest) {
-  if (rest.length > 0) throw createError('INVALID_USAGE', 'Usage: ppie pair [--origin <allowed-origin>] [--no-open]');
+  if (rest.length > 0) throw createError('INVALID_USAGE', 'Usage: ppie pair [--origin <allowed-origin>] [--client-name <display-name>] [--no-open]');
   const result = await pairCompanion({
     origin: FLAGS.origin ?? PRODUCTION_ORIGIN,
     executable: fileURLToPath(import.meta.url),
     version: PACKAGE.version,
+    clientName: FLAGS.clientName,
   });
   const opened = FLAGS.noOpen || process.env.PPIE_BROWSER_OPEN === '0' ? false : openBrowser(result.url);
   if (FLAGS.json) {
@@ -261,6 +267,7 @@ async function handlePair(rest) {
       protocol: 'promptpie.local/v1',
       origin: result.origin,
       port: result.port,
+      url: result.url,
       expiresAt: result.expiresAt,
       browserOpened: opened,
     });
@@ -738,6 +745,7 @@ ${BOLD('GLOBAL OPTIONS')}
   --expected-revision <sha256>           Require this browser revision before push
   --output <file>                        Write a pulled prompt to a new file
   --no-open                              Prepare pairing without opening a system browser
+  --client-name <display-name>           Name the connecting client in Prompt Pie
 
 ${BOLD('TARGETS')}
   ${TARGET_NAMES.join(', ')}
@@ -839,6 +847,7 @@ function parseArgv(argv) {
       '--origin': 'origin',
       '--expected-revision': 'expectedRevision',
       '--output': 'output',
+      '--client-name': 'clientName',
     }[arg];
     if (parsingFlags && valueFlag) {
       const value = argv[index + 1];
@@ -858,7 +867,7 @@ function parseArgv(argv) {
 }
 
 function defaultFlags() {
-  return { json: false, noColor: false, force: false, dryRun: false, noOpen: false, origin: undefined, expectedRevision: undefined, output: undefined };
+  return { json: false, noColor: false, force: false, dryRun: false, noOpen: false, origin: undefined, expectedRevision: undefined, output: undefined, clientName: undefined };
 }
 
 function validateOptionScope(command, action) {
@@ -866,6 +875,7 @@ function validateOptionScope(command, action) {
   if (FLAGS.expectedRevision !== undefined && !(command === 'prompt' && action === 'push')) fail(createError('INVALID_OPTION', '--expected-revision can only be used with "ppie prompt push".'));
   if (FLAGS.output !== undefined && !(command === 'prompt' && action === 'pull')) fail(createError('INVALID_OPTION', '--output can only be used with "ppie prompt pull".'));
   if (FLAGS.noOpen && command !== 'pair') fail(createError('INVALID_OPTION', '--no-open can only be used with "ppie pair".'));
+  if (FLAGS.clientName !== undefined && command !== 'pair') fail(createError('INVALID_OPTION', '--client-name can only be used with "ppie pair".'));
 }
 
 function openBrowser(url) {

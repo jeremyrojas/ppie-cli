@@ -52,6 +52,7 @@ describe('local companion HTTP bridge', () => {
     assert.equal(response.status, 200);
     assert.equal(body.paired, false);
     assert.equal(body.protocol, 'promptpie.local/v1');
+    assert.equal(body.companionApiVersion, 3);
     assert.equal(Object.hasOwn(body, 'internalToken'), false);
   });
 
@@ -91,6 +92,7 @@ describe('local companion HTTP bridge', () => {
     assert.deepEqual(replay.body, first.body);
     sessionToken = first.body.payload.session.token;
     assert.equal(typeof sessionToken, 'string');
+    assert.deepEqual(first.body.payload.client, { displayName: 'Prompt Pie CLI' });
   });
 
   it('rejects nonce replay and idempotency conflicts', async () => {
@@ -203,6 +205,79 @@ describe('local companion HTTP bridge', () => {
     const body = await response.json();
     assert.equal(response.status, 413);
     assert.equal(body.error.code, 'CLI_PAYLOAD_TOO_LARGE');
+  });
+
+  it('revokes the active browser session and rejects active CLI work', async () => {
+    const preflight = await fetch(url('/v1/browser/disconnect'), {
+      method: 'OPTIONS',
+      headers: { Origin: ORIGIN, 'Access-Control-Request-Private-Network': 'true' },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get('access-control-allow-origin'), ORIGIN);
+    assert.equal(preflight.headers.get('access-control-allow-private-network'), 'true');
+
+    const wrongOrigin = await post('/v1/browser/disconnect', requestEnvelope('browser.disconnect', {}), {
+      bearer: sessionToken, origin: 'https://evil.example',
+    });
+    assert.equal(wrongOrigin.response.status, 403);
+    assert.equal(wrongOrigin.body.error.code, 'CLI_ORIGIN_REJECTED');
+    assert.equal(wrongOrigin.response.headers.get('access-control-allow-origin'), null);
+
+    const wrongBearer = await post('/v1/browser/disconnect', requestEnvelope('browser.disconnect', {}), {
+      bearer: 'wrong-session-token',
+    });
+    assert.equal(wrongBearer.response.status, 401);
+    assert.equal(wrongBearer.body.error.code, 'CLI_NOT_PAIRED');
+    assert.doesNotMatch(JSON.stringify(wrongBearer.body), /wrong-session-token/);
+
+    const malformed = await post('/v1/browser/disconnect', requestEnvelope('browser.disconnect', { extra: true }), {
+      bearer: sessionToken,
+    });
+    assert.equal(malformed.response.status, 400);
+    assert.equal(malformed.body.error.code, 'CLI_MALFORMED_REQUEST');
+
+    const cli = runCliAsync(['prompt', 'pull', 'disconnect-test', '--json']);
+    const poll = await post('/v1/browser/poll', requestEnvelope('browser.poll', { waitMs: 1_000 }), { bearer: sessionToken });
+    assert.equal(poll.body.payload.operation.kind, 'prompt.pull');
+    const waitingPoll = post('/v1/browser/poll', requestEnvelope('browser.poll', { waitMs: 1_000 }), { bearer: sessionToken });
+    await delay(10);
+
+    const envelope = requestEnvelope('browser.disconnect', {}, 'disconnect-idempotency-key');
+    const disconnected = await post('/v1/browser/disconnect', envelope, { bearer: sessionToken });
+    const duplicate = await post('/v1/browser/disconnect', envelope, { bearer: sessionToken });
+    assert.equal(disconnected.response.status, 200);
+    assert.deepEqual(disconnected.body.payload, { disconnected: true });
+    assert.deepEqual(duplicate.body, disconnected.body);
+    const interruptedPoll = await waitingPoll;
+    assert.equal(interruptedPoll.response.status, 401);
+    assert.equal(interruptedPoll.body.error.code, 'CLI_NOT_PAIRED');
+
+    const cliResult = await cli;
+    assert.equal(cliResult.code, 1);
+    assert.equal(JSON.parse(cliResult.stderr).error.code, 'CLI_NOT_PAIRED');
+
+    const statusResponse = await fetch(url('/v1/cli/status'), { headers: internalHeaders() });
+    const status = await statusResponse.json();
+    assert.equal(status.paired, false);
+    assert.equal(status.sessionExpiresAt, null);
+
+    const oldPoll = await post('/v1/browser/poll', requestEnvelope('browser.poll', { waitMs: 0 }), { bearer: sessionToken });
+    const oldResult = await post('/v1/browser/result', requestEnvelope('browser.result', {
+      operationId: 'disconnect-test-result', result: { prompt: validPrompt() },
+    }), { bearer: sessionToken });
+    const freshDisconnect = await post('/v1/browser/disconnect', requestEnvelope('browser.disconnect', {}), { bearer: sessionToken });
+    assert.equal(oldPoll.response.status, 401);
+    assert.equal(oldPoll.body.error.code, 'CLI_NOT_PAIRED');
+    assert.equal(oldResult.response.status, 401);
+    assert.equal(oldResult.body.error.code, 'CLI_NOT_PAIRED');
+    assert.equal(freshDisconnect.response.status, 401);
+    assert.equal(freshDisconnect.body.error.code, 'CLI_NOT_PAIRED');
+
+    const conflict = await post('/v1/browser/disconnect', { ...envelope, payload: { extra: true } }, { bearer: sessionToken });
+    assert.equal(conflict.response.status, 409);
+    assert.equal(conflict.body.error.code, 'CLI_IDEMPOTENCY_CONFLICT');
+
+    assert.doesNotMatch(JSON.stringify(disconnected.body), new RegExp(sessionToken));
   });
 });
 

@@ -67,6 +67,14 @@ The local companion listens only on `127.0.0.1`, chooses a random port, and acce
 ppie pair --origin http://localhost:3000
 ```
 
+Agent integrations can name the connecting client for the pairing confirmation:
+
+```bash
+ppie pair --client-name Codex
+```
+
+Direct pairing uses `Prompt Pie CLI`. Client names are validated display text and grant no capabilities.
+
 Automation and tests must suppress the system browser opener:
 
 ```bash
@@ -75,7 +83,7 @@ ppie pair --no-open
 
 `PPIE_BROWSER_OPEN=0` provides the same test seam for subprocess harnesses.
 
-Pairing opens a short-lived, single-use browser link. Run `ppie status` to see whether the companion is running and paired.
+Pairing opens a five-minute, single-use browser link. `ppie pair --json` returns that exact active link in its `url` field. Run `ppie status` to see whether the companion is running and paired.
 
 Prompt JSON contains `id`, `title`, and `content`. The CLI calculates its SHA-256 `revision`:
 
@@ -133,7 +141,7 @@ ppie skill list
 ```text
 ppie init
 ppie status
-ppie pair [--origin <allowed-origin>] [--no-open]
+ppie pair [--origin <allowed-origin>] [--client-name <display-name>] [--no-open]
 ppie prompt push <file|-> [--expected-revision <sha256>]
 ppie prompt pull <prompt-id> [--output <file>]
 ppie doctor
@@ -238,6 +246,7 @@ ppie skill link code-review codex claude --dry-run --json
 --expected-revision <sha256>   Require a browser revision before prompt push
 --output <file>                Write pulled prompt JSON to a new file
 --no-open                      Prepare pairing without opening a system browser
+--client-name <display-name>   Name the connecting client in Prompt Pie
 ```
 
 `--force` is only valid with `ppie skill link`.
