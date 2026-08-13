@@ -1,0 +1,19 @@
+{
+  "protocol": "promptpie.local/v1",
+  "requestId": "5b912e69-2884-4e12-aecf-7558a5f6350f",
+  "ok": true,
+  "type": "browser.poll",
+  "payload": {
+    "operation": {
+      "operationId": "056e2bc2-b86e-489d-9463-b6d41e58c80a",
+      "kind": "prompt.push",
+      "prompt": {
+        "id": "welcome",
+        "title": "Welcome",
+        "content": "Say hello",
+        "revision": "8ca705600e0756b8085030cb4775834e265a888bef3c820cdf2f71f7d33a0793"
+      },
+      "expectedRevision": null
+    }
+  }
+}
