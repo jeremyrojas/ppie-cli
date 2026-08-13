@@ -52,6 +52,7 @@ describe('local companion HTTP bridge', () => {
     assert.equal(response.status, 200);
     assert.equal(body.paired, false);
     assert.equal(body.protocol, 'promptpie.local/v1');
+    assert.equal(body.companionApiVersion, 2);
     assert.equal(Object.hasOwn(body, 'internalToken'), false);
   });
 

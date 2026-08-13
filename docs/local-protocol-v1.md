@@ -44,6 +44,8 @@ CLI-private endpoints:
 
 CLI-private endpoints reject requests that contain an `Origin` header. Unrecognized paths return `404`.
 
+Authenticated CLI status includes `companionApiVersion: 2`. This integer revisions the private CLI-to-companion behavior independently from the browser protocol and npm package version. A current CLI reuses a daemon only when Origin, protocol, and this API revision match. A missing or different revision triggers an authenticated clean shutdown, waits for the owned daemon to stop, and starts the current companion before creating a challenge. Clean shutdown rejects pending CLI operations with `CLI_NOT_PAIRED`, so an upgrade cannot silently strand active requests or reuse older pairing semantics.
+
 ## Envelopes
 
 Every POST request contains exactly:

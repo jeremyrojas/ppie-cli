@@ -1,12 +1,14 @@
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const BIN = fileURLToPath(new URL('../bin/ppie.mjs', import.meta.url));
+const REPO = fileURLToPath(new URL('..', import.meta.url));
+const PR1_MERGE_COMMIT = 'e51babd2f36acf544c45f25d594ec0d60d2ae783';
 const homes = new Set();
 
 afterEach(() => {
@@ -37,6 +39,7 @@ describe('real CLI companion commands', () => {
     assert.equal(status.status, 0);
     assert.equal(statusBody.companion.running, true);
     assert.equal(statusBody.companion.paired, false);
+    assert.equal(statusBody.companion.companionApiVersion, 2);
     assert.equal(Object.hasOwn(statusBody.companion, 'internalToken'), false);
 
     const pull = run(['prompt', 'pull', 'welcome', '--json'], home);
@@ -75,6 +78,55 @@ describe('real CLI companion commands', () => {
     assert.equal(response.status, 200);
     assert.equal(payload.ok, true);
     assert.deepEqual(payload.payload.client, { displayName: 'Codex' });
+  });
+
+  it('replaces the merged PR 1 companion before creating a current challenge', async () => {
+    const home = makeHome();
+    const oldCli = materializeCliRevision(PR1_MERGE_COMMIT, home);
+    const oldPair = runWithBin(oldCli, ['pair', '--origin', 'http://localhost:3000', '--no-open', '--json'], home);
+    assert.equal(oldPair.status, 0, oldPair.stderr);
+    const oldState = readCompanionState(home);
+    assert.equal(oldState.protocol, 'promptpie.local/v1');
+    assert.equal(oldState.version, '0.1.0');
+    assert.equal(Object.hasOwn(oldState, 'companionApiVersion'), false);
+
+    const startedAt = Date.now();
+    const currentPair = run([
+      'pair', '--origin', 'http://localhost:3000', '--client-name', 'Codex', '--no-open', '--json',
+    ], home);
+    assert.equal(currentPair.status, 0, currentPair.stderr);
+    const pairBody = JSON.parse(currentPair.stdout);
+    const currentState = readCompanionState(home);
+    assert.notEqual(currentState.pid, oldState.pid);
+    assert.notEqual(currentState.port, oldState.port);
+    assert.equal(currentState.companionApiVersion, 2);
+    assert.equal(pairBody.browserOpened, false);
+    assert.equal(pairBody.port, currentState.port);
+    assert.ok(Date.parse(pairBody.expiresAt) - startedAt >= 295_000);
+    assert.ok(Date.parse(pairBody.expiresAt) - startedAt <= 305_000);
+    assertProcessStopped(oldState.pid);
+
+    const pairUrl = new URL(pairBody.url);
+    const fragment = new URLSearchParams(pairUrl.hash.slice(1));
+    assert.equal(fragment.get('port'), String(currentState.port));
+    const response = await fetch(`http://127.0.0.1:${currentState.port}/v1/pair`, {
+      method: 'POST',
+      headers: { Origin: 'http://localhost:3000', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        protocol: 'promptpie.local/v1',
+        requestId: 'cross-version-pair-request',
+        idempotencyKey: 'cross-version-pair-key',
+        type: 'browser.pair',
+        payload: {
+          nonce: fragment.get('nonce'),
+          client: { name: 'promptpie-web', version: 'test' },
+        },
+      }),
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(payload.payload.client, { displayName: 'Codex' });
+    assert.equal(payload.payload.companion.protocol, 'promptpie.local/v1');
   });
 
   it('strictly validates command options and prompt files', () => {
@@ -142,10 +194,40 @@ function makeHome() {
 }
 
 function run(args, home, input) {
-  return spawnSync(process.execPath, [BIN, ...args], {
+  return runWithBin(BIN, args, home, input);
+}
+
+function runWithBin(bin, args, home, input) {
+  return spawnSync(process.execPath, [bin, ...args], {
     env: { ...process.env, PPIE_HOME: home, PPIE_BROWSER_OPEN: '0' },
     encoding: 'utf8',
     input,
     timeout: 8_000,
   });
+}
+
+function readCompanionState(home) {
+  return JSON.parse(readFileSync(join(home, '.promptpie', 'companion.json'), 'utf8'));
+}
+
+function materializeCliRevision(revision, home) {
+  const destination = join(home, 'pr1-cli');
+  const listing = spawnSync('git', ['ls-tree', '-r', '--name-only', revision, '--', 'bin', 'lib', 'package.json'], {
+    cwd: REPO,
+    encoding: 'utf8',
+  });
+  assert.equal(listing.status, 0, `Unable to read ${revision}. CI must fetch full history.\n${listing.stderr}`);
+  for (const path of listing.stdout.trim().split('\n')) {
+    if (!path) continue;
+    const content = spawnSync('git', ['show', `${revision}:${path}`], { cwd: REPO, encoding: null });
+    assert.equal(content.status, 0, content.stderr?.toString('utf8'));
+    const target = join(destination, path);
+    mkdirSync(join(target, '..'), { recursive: true });
+    writeFileSync(target, content.stdout);
+  }
+  return join(destination, 'bin', 'ppie.mjs');
+}
+
+function assertProcessStopped(pid) {
+  assert.throws(() => process.kill(pid, 0), error => error.code === 'ESRCH');
 }
