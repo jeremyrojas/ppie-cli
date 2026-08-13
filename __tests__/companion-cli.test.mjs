@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 const BIN = fileURLToPath(new URL('../bin/ppie.mjs', import.meta.url));
 const REPO = fileURLToPath(new URL('..', import.meta.url));
 const PR1_MERGE_COMMIT = 'e51babd2f36acf544c45f25d594ec0d60d2ae783';
+const API_V2_COMMIT = '3af904f3972ba3f04468bf17c67a2851d365e362';
 const homes = new Set();
 
 afterEach(() => {
@@ -39,7 +40,7 @@ describe('real CLI companion commands', () => {
     assert.equal(status.status, 0);
     assert.equal(statusBody.companion.running, true);
     assert.equal(statusBody.companion.paired, false);
-    assert.equal(statusBody.companion.companionApiVersion, 2);
+    assert.equal(statusBody.companion.companionApiVersion, 3);
     assert.equal(Object.hasOwn(statusBody.companion, 'internalToken'), false);
 
     const pull = run(['prompt', 'pull', 'welcome', '--json'], home);
@@ -99,7 +100,7 @@ describe('real CLI companion commands', () => {
     const currentState = readCompanionState(home);
     assert.notEqual(currentState.pid, oldState.pid);
     assert.notEqual(currentState.port, oldState.port);
-    assert.equal(currentState.companionApiVersion, 2);
+    assert.equal(currentState.companionApiVersion, 3);
     assert.equal(pairBody.browserOpened, false);
     assert.equal(pairBody.port, currentState.port);
     assert.ok(Date.parse(pairBody.expiresAt) - startedAt >= 295_000);
@@ -127,6 +128,23 @@ describe('real CLI companion commands', () => {
     assert.equal(response.status, 200);
     assert.deepEqual(payload.payload.client, { displayName: 'Codex' });
     assert.equal(payload.payload.companion.protocol, 'promptpie.local/v1');
+  });
+
+  it('replaces a companion from the prior private API revision', () => {
+    const home = makeHome();
+    const oldCli = materializeCliRevision(API_V2_COMMIT, home);
+    const oldPair = runWithBin(oldCli, ['pair', '--origin', 'http://localhost:3000', '--no-open', '--json'], home);
+    assert.equal(oldPair.status, 0, oldPair.stderr);
+    const oldState = readCompanionState(home);
+    assert.equal(oldState.companionApiVersion, 2);
+
+    const currentPair = run(['pair', '--origin', 'http://localhost:3000', '--no-open', '--json'], home);
+    assert.equal(currentPair.status, 0, currentPair.stderr);
+    const currentState = readCompanionState(home);
+    assert.equal(currentState.companionApiVersion, 3);
+    assert.notEqual(currentState.pid, oldState.pid);
+    assertProcessStopped(oldState.pid);
+    assert.equal(JSON.parse(currentPair.stdout).browserOpened, false);
   });
 
   it('strictly validates command options and prompt files', () => {

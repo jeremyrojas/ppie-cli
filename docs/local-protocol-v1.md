@@ -34,6 +34,8 @@ Browser endpoints:
 | `POST` | `/v1/browser/poll` | Bearer session and exact `Origin` | `browser.poll` |
 | `OPTIONS` | `/v1/browser/result` | Exact `Origin` | preflight |
 | `POST` | `/v1/browser/result` | Bearer session and exact `Origin` | `browser.result` |
+| `OPTIONS` | `/v1/browser/disconnect` | Exact `Origin` | preflight |
+| `POST` | `/v1/browser/disconnect` | Bearer session and exact `Origin` | `browser.disconnect` |
 
 CLI-private endpoints:
 
@@ -44,7 +46,7 @@ CLI-private endpoints:
 
 CLI-private endpoints reject requests that contain an `Origin` header. Unrecognized paths return `404`.
 
-Authenticated CLI status includes `companionApiVersion: 2`. This integer revisions the private CLI-to-companion behavior independently from the browser protocol and npm package version. A current CLI reuses a daemon only when Origin, protocol, and this API revision match. A missing or different revision triggers an authenticated clean shutdown, waits for the owned daemon to stop, and starts the current companion before creating a challenge. Clean shutdown rejects pending CLI operations with `CLI_NOT_PAIRED`, so an upgrade cannot silently strand active requests or reuse older pairing semantics.
+Authenticated CLI status includes `companionApiVersion: 3`. This integer revisions the private CLI-to-companion behavior independently from the browser protocol and npm package version. A current CLI reuses a daemon only when Origin, protocol, and this API revision match. A missing or different revision triggers an authenticated clean shutdown, waits for the owned daemon to stop, and starts the current companion before creating a challenge. Clean shutdown rejects pending CLI operations with `CLI_NOT_PAIRED`, so an upgrade cannot silently strand active requests or reuse older pairing semantics.
 
 ## Envelopes
 
@@ -130,6 +132,24 @@ Response payload:
 The browser sends `Authorization: Bearer <token>` for polling and results. The session lasts 12 hours. A successful later pair replaces the active session. The browser may use same-tab `sessionStorage` for reload continuity. It clears the token after `401`, `CLI_NOT_PAIRED`, or `CLI_INCOMPATIBLE`.
 
 The CLI owns `client.displayName` and returns it only after successful Origin and nonce validation. `ppie pair --client-name Codex` sets the example value above. Direct pairing defaults to `Prompt Pie CLI`. Display names contain 1-40 Unicode letters or numbers plus spaces, dots, underscores, and hyphens; they start and end with a letter or number and contain no repeated spaces. Invalid values return `CLI_INVALID_CLIENT_NAME`. The browser renders this value as text and may use `Prompt Pie CLI` when pairing with an older companion that omits `client`.
+
+## Disconnect
+
+The browser revokes its current session with `POST /v1/browser/disconnect`, the exact allowed Origin, and its bearer token:
+
+```json
+{ "type": "browser.disconnect", "payload": {} }
+```
+
+The payload is exactly empty. Success returns:
+
+```json
+{ "disconnected": true }
+```
+
+Success immediately clears the active session, changes authenticated CLI status to `paired: false` and `sessionExpiresAt: null`, wakes an open long poll, and rejects queued or active CLI operations with `CLI_NOT_PAIRED`. The revoked bearer receives `401 CLI_NOT_PAIRED` from later poll, result, and new disconnect requests.
+
+An identical disconnect retry with the same request ID and idempotency key replays the successful response during the 10-minute idempotency window. This narrow replay path retains only a SHA-256 token fingerprint in memory and never returns session data. A changed or new request made with the revoked bearer fails authorization. The browser keeps its local session until it receives the success envelope; an error means remote revocation is unconfirmed and should remain actionable to the user.
 
 ## Polling and operations
 
