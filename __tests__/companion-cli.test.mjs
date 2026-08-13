@@ -29,7 +29,7 @@ describe('real CLI companion commands', () => {
     assert.equal(pairBody.protocol, 'promptpie.local/v1');
     assert.equal(pairBody.origin, 'http://localhost:3000');
     assert.equal(pairBody.browserOpened, false);
-    assert.equal(Object.hasOwn(pairBody, 'url'), false);
+    assert.match(pairBody.url, /^http:\/\/localhost:3000\/pair#protocol=promptpie\.local%2Fv1&port=\d+&nonce=/);
     assert.equal(statSync(join(home, '.promptpie', 'companion.json')).mode & 0o777, 0o600);
 
     const status = run(['status', '--json'], home);
@@ -46,10 +46,43 @@ describe('real CLI companion commands', () => {
     assert.match(error.error.message, /ppie pair/);
   });
 
+  it('returns the exact active pair URL and caller identity in JSON', async () => {
+    const home = makeHome();
+    const initial = run(['pair', '--origin', 'http://localhost:3000', '--no-open', '--json'], home);
+    assert.equal(initial.status, 0);
+    const pair = run(['pair', '--origin', 'http://localhost:3000', '--client-name', 'Codex', '--no-open', '--json'], home);
+    assert.equal(pair.status, 0);
+    const pairBody = JSON.parse(pair.stdout);
+    const pairUrl = new URL(pairBody.url);
+    const port = pairUrl.hash.slice(1) && new URLSearchParams(pairUrl.hash.slice(1)).get('port');
+    const nonce = new URLSearchParams(pairUrl.hash.slice(1)).get('nonce');
+    assert.equal(pairBody.browserOpened, false);
+    assert.equal(pairBody.port, Number(port));
+    assert.ok(nonce);
+
+    const response = await fetch(`http://127.0.0.1:${port}/v1/pair`, {
+      method: 'POST',
+      headers: { Origin: 'http://localhost:3000', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        protocol: 'promptpie.local/v1',
+        requestId: 'pair-json-request-1',
+        idempotencyKey: 'pair-json-idempotency-1',
+        type: 'browser.pair',
+        payload: { nonce, client: { name: 'promptpie-web', version: 'test' } },
+      }),
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.ok, true);
+    assert.deepEqual(payload.payload.client, { displayName: 'Codex' });
+  });
+
   it('strictly validates command options and prompt files', () => {
     const home = makeHome();
     assert.equal(run(['pair', '--origin', 'https://example.com/path'], home).status, 1);
     assert.equal(run(['pair', '--output', 'x'], home).status, 1);
+    assert.equal(run(['pair', '--client-name', '<Codex>'], home).status, 1);
+    assert.equal(run(['status', '--client-name', 'Codex'], home).status, 1);
     assert.equal(run(['prompt', 'push'], home).status, 1);
     assert.equal(run(['prompt', 'pull', '../bad'], home).status, 1);
     assert.equal(run(['status', '--unknown'], home).status, 1);

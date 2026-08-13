@@ -20,7 +20,7 @@ The fragment has exactly three fields:
 - `port`: the loopback companion port
 - `nonce`: 24 random bytes encoded as base64url
 
-The nonce expires after 120 seconds and succeeds once. The fragment never contains the browser session token or CLI-private token.
+The nonce expires after 300 seconds and succeeds once. The fragment never contains the browser session token, client display name, or CLI-private token.
 
 ## Endpoints
 
@@ -91,6 +91,14 @@ Error text and details are redacted before crossing the companion boundary.
 
 ## Pairing
 
+The CLI creates or rotates the active challenge through the authenticated CLI-private endpoint with request type `cli.pair`:
+
+```json
+{ "client": { "displayName": "Codex" } }
+```
+
+The private payload has exactly this shape. `ppie pair --json` returns the URL for this same active challenge in its `url` field; callers do not request another challenge to recover the fragment.
+
 `POST /v1/pair`:
 
 ```json
@@ -112,11 +120,14 @@ Response payload:
     "token": "<bearer token>",
     "expiresAt": "2026-08-13T12:00:00.000Z"
   },
-  "companion": { "protocol": "promptpie.local/v1", "version": "0.1.0" }
+  "companion": { "protocol": "promptpie.local/v1", "version": "0.1.0" },
+  "client": { "displayName": "Codex" }
 }
 ```
 
 The browser sends `Authorization: Bearer <token>` for polling and results. The session lasts 12 hours. A successful later pair replaces the active session. The browser may use same-tab `sessionStorage` for reload continuity. It clears the token after `401`, `CLI_NOT_PAIRED`, or `CLI_INCOMPATIBLE`.
+
+The CLI owns `client.displayName` and returns it only after successful Origin and nonce validation. `ppie pair --client-name Codex` sets the example value above. Direct pairing defaults to `Prompt Pie CLI`. Display names contain 1-40 Unicode letters or numbers plus spaces, dots, underscores, and hyphens; they start and end with a letter or number and contain no repeated spaces. Invalid values return `CLI_INVALID_CLIENT_NAME`. The browser renders this value as text and may use `Prompt Pie CLI` when pairing with an older companion that omits `client`.
 
 ## Polling and operations
 
@@ -246,7 +257,7 @@ When the request includes `Access-Control-Request-Private-Network: true`, the al
 ## Error codes
 
 - `CLI_NOT_PAIRED`, `CLI_INCOMPATIBLE`
-- `CLI_INVALID_ORIGIN`, `CLI_ORIGIN_REJECTED`
+- `CLI_INVALID_ORIGIN`, `CLI_ORIGIN_REJECTED`, `CLI_INVALID_CLIENT_NAME`
 - `CLI_PAIRING_EXPIRED`, `CLI_PAIRING_REPLAY`, `CLI_PAIRING_REJECTED`
 - `CLI_MALFORMED_REQUEST`, `CLI_PAYLOAD_TOO_LARGE`, `CLI_UNAUTHORIZED`
 - `CLI_IDEMPOTENCY_CONFLICT`

@@ -91,6 +91,7 @@ describe('local companion HTTP bridge', () => {
     assert.deepEqual(replay.body, first.body);
     sessionToken = first.body.payload.session.token;
     assert.equal(typeof sessionToken, 'string');
+    assert.deepEqual(first.body.payload.client, { displayName: 'Prompt Pie CLI' });
   });
 
   it('rejects nonce replay and idempotency conflicts', async () => {
