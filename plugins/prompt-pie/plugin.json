@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "prompt-pie",
+  "version": "0.1.0",
+  "description": "Connect Codex to Prompt Pie to send prompts and retrieve edited prompts through the local ppie companion.",
+  "author": {
+    "name": "Jeremy Rojas",
+    "url": "https://github.com/jeremyrojas"
+  },
+  "homepage": "https://docs.promptpie.dev/cli",
+  "repository": "https://github.com/jeremyrojas/ppie-cli",
+  "license": "MIT",
+  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "local-companion"]
+}

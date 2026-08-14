@@ -1,6 +1,6 @@
 {
   "name": "promptpie",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Manage and share AI coding skills across Claude Code, Codex CLI, and Cursor",
   "author": "Jeremy Rojas",
   "homepage": "https://docs.promptpie.dev/cli",
@@ -14,7 +14,8 @@
     "promptpie": "./bin/ppie.mjs"
   },
   "scripts": {
-    "test": "node --test __tests__/*.test.mjs"
+    "test": "node --test __tests__/*.test.mjs",
+    "test:plugin": "node --test __tests__/plugin.test.mjs"
   },
   "engines": {
     "node": ">=18"
