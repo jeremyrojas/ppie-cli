@@ -31,6 +31,7 @@ const PLUGIN_AUTHOR = 'Jeremy Devz';
 const PLUGIN_HOMEPAGE = 'https://promptpie.dev/';
 const PLUGIN_REPOSITORY = 'https://github.com/jeremyrojas/ppie-cli';
 const PAIR_COMMAND = 'ppie pair --origin https://app.promptpie.dev --client-name Codex --no-open --json';
+const SKILL_FRONTMATTER = /^---\r?\nname: prompt-pie\r?\n/;
 const BRIDGE_CODES = [
   'CLI_NOT_PAIRED',
   'CLI_PAIRING_EXPIRED',
@@ -117,7 +118,8 @@ describe('Prompt Pie plugin package', () => {
 
     const skill = readFileSync(SKILL, 'utf8');
     const reference = readFileSync(REFERENCE, 'utf8');
-    assert.match(skill, /^---\nname: prompt-pie\n/);
+    assert.match(skill, SKILL_FRONTMATTER);
+    assert.match(skill.replace(/\r?\n/g, '\r\n'), SKILL_FRONTMATTER);
     for (const phrase of ['Connect to Prompt Pie', 'send this prompt to Prompt Pie', 'get my edited prompt', '$prompt-pie']) {
       assert.match(skill.toLowerCase(), new RegExp(escapeRegExp(phrase.toLowerCase())));
     }
