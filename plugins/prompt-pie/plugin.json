@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "description": "Connect Codex to Prompt Pie to send prompts and retrieve edited prompts through the local ppie companion.",
   "author": {
-    "name": "Jeremy Rojas",
+    "name": "Jeremy Devz",
     "url": "https://github.com/jeremyrojas"
   },
-  "homepage": "https://docs.promptpie.dev/cli",
+  "homepage": "https://promptpie.dev/",
   "repository": "https://github.com/jeremyrojas/ppie-cli",
   "license": "MIT",
   "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "local-companion"]

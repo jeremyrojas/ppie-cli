@@ -27,6 +27,9 @@ const REFERENCE = join(PLUGIN, 'skills', 'prompt-pie', 'references', 'cli-contra
 const LOGO = join(PLUGIN, 'assets', 'prompt-pie-logo.png');
 const LOGO_PATH = './assets/prompt-pie-logo.png';
 const LOGO_SHA256 = '02d88dad627dfdaa22f2b247811e962d3a3bcb645cced916be69d51fd50f0ed7';
+const PLUGIN_AUTHOR = 'Jeremy Devz';
+const PLUGIN_HOMEPAGE = 'https://promptpie.dev/';
+const PLUGIN_REPOSITORY = 'https://github.com/jeremyrojas/ppie-cli';
 const PAIR_COMMAND = 'ppie pair --origin https://app.promptpie.dev --client-name Codex --no-open --json';
 const BRIDGE_CODES = [
   'CLI_NOT_PAIRED',
@@ -68,11 +71,18 @@ describe('Prompt Pie plugin package', () => {
     assert.equal(portable.$schema, 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json');
     assert.equal(portable.name, 'prompt-pie');
     assert.equal(portable.version, '0.1.0');
+    assert.deepEqual(portable.author, {
+      name: PLUGIN_AUTHOR,
+      url: 'https://github.com/jeremyrojas',
+    });
+    assert.equal(portable.homepage, PLUGIN_HOMEPAGE);
+    assert.equal(portable.repository, PLUGIN_REPOSITORY);
     for (const field of ['name', 'version', 'description', 'author', 'homepage', 'repository', 'license', 'keywords']) {
       assert.deepEqual(codex[field], portable[field]);
     }
     assert.equal(codex.skills, './skills/');
     assert.equal(codex.interface.displayName, 'Prompt Pie');
+    assert.equal(codex.interface.developerName, PLUGIN_AUTHOR);
     assert.equal(codex.interface.brandColor, '#F5C542');
     for (const field of ['composerIcon', 'logo', 'logoDark']) {
       assert.equal(codex.interface[field], LOGO_PATH);
