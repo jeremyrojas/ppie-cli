@@ -1,6 +1,7 @@
 import { afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   cpSync,
   existsSync,
@@ -23,6 +24,9 @@ const CODEX_MANIFEST = join(PLUGIN, '.codex-plugin', 'plugin.json');
 const MARKETPLACE = join(REPO, '.agents', 'plugins', 'marketplace.json');
 const SKILL = join(PLUGIN, 'skills', 'prompt-pie', 'SKILL.md');
 const REFERENCE = join(PLUGIN, 'skills', 'prompt-pie', 'references', 'cli-contract.md');
+const LOGO = join(PLUGIN, 'assets', 'prompt-pie-logo.png');
+const LOGO_PATH = './assets/prompt-pie-logo.png';
+const LOGO_SHA256 = '02d88dad627dfdaa22f2b247811e962d3a3bcb645cced916be69d51fd50f0ed7';
 const PAIR_COMMAND = 'ppie pair --origin https://app.promptpie.dev --client-name Codex --no-open --json';
 const BRIDGE_CODES = [
   'CLI_NOT_PAIRED',
@@ -69,6 +73,12 @@ describe('Prompt Pie plugin package', () => {
     }
     assert.equal(codex.skills, './skills/');
     assert.equal(codex.interface.displayName, 'Prompt Pie');
+    assert.equal(codex.interface.brandColor, '#F5C542');
+    for (const field of ['composerIcon', 'logo', 'logoDark']) {
+      assert.equal(codex.interface[field], LOGO_PATH);
+      assert.equal(existsSync(join(PLUGIN, codex.interface[field])), true);
+    }
+    assert.equal(createHash('sha256').update(readFileSync(LOGO)).digest('hex'), LOGO_SHA256);
     assert.deepEqual(codex.interface.defaultPrompt, [
       'Connect to Prompt Pie.',
       'Send this prompt to Prompt Pie.',
@@ -198,6 +208,7 @@ describe('Prompt Pie plugin package', () => {
       join('prompt-pie', '0.1.0', '.codex-plugin', 'plugin.json'),
       join('prompt-pie', '0.1.0', 'skills', 'prompt-pie', 'SKILL.md'),
       join('prompt-pie', '0.1.0', 'skills', 'prompt-pie', 'references', 'cli-contract.md'),
+      join('prompt-pie', '0.1.0', 'assets', 'prompt-pie-logo.png'),
     ]) {
       assert.ok(
         installedFiles.some(path => path.endsWith(suffix)),

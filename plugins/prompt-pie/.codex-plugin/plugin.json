@@ -18,6 +18,10 @@
     "developerName": "Jeremy Rojas",
     "category": "Productivity",
     "capabilities": ["Local", "Write"],
+    "brandColor": "#F5C542",
+    "composerIcon": "./assets/prompt-pie-logo.png",
+    "logo": "./assets/prompt-pie-logo.png",
+    "logoDark": "./assets/prompt-pie-logo.png",
     "defaultPrompt": [
       "Connect to Prompt Pie.",
       "Send this prompt to Prompt Pie.",
