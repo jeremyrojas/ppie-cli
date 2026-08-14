@@ -13,8 +13,8 @@ Use it to pair Prompt Pie with local prompt workflows and keep AI coding skills 
 Install globally:
 
 ```bash
-npm i -g promptpie
-ppie --version
+npm install -g promptpie@latest
+ppie --version --json
 ```
 
 Run without a global install:
@@ -102,6 +102,43 @@ ppie prompt push ./prompt.json --expected-revision <sha256>
 ```
 
 The versioned HTTP contract and security lifecycle are documented in [`docs/local-protocol-v1.md`](docs/local-protocol-v1.md).
+
+## Codex Plugin
+
+The Prompt Pie plugin lets Codex connect to a signed-out Prompt Pie canvas, send one prompt for editing, and retrieve the edited prompt through the local `ppie` companion. It requires Node.js 18 or newer and `promptpie` CLI 0.2.0 or newer.
+
+Add this repository as a Codex marketplace and install the plugin:
+
+```bash
+codex plugin marketplace add https://github.com/jeremyrojas/ppie-cli --json
+codex plugin add prompt-pie@prompt-pie --json
+```
+
+Start a fresh Codex task after installation. Invoke the skill directly with `$prompt-pie`, or ask:
+
+- “Connect to Prompt Pie.”
+- “Send this prompt to Prompt Pie.”
+- “Get my edited prompt.”
+
+Codex prepares pairing with this browser-suppressed command:
+
+```bash
+ppie pair --origin https://app.promptpie.dev --client-name Codex --no-open --json
+```
+
+Open the returned one-time link yourself in the browser profile that owns the signed-out Prompt Pie canvas. Allow Local Network Access for `app.promptpie.dev` when the browser asks. If access was denied, allow it in that site's browser settings and request a fresh pairing link.
+
+Upgrade the marketplace and CLI separately, then start a fresh Codex task:
+
+```bash
+codex plugin marketplace upgrade prompt-pie --json
+npm install -g promptpie@latest
+ppie --version --json
+```
+
+Linux and macOS have focused plugin smoke coverage. Windows has native Node.js 20 package and CLI discovery coverage and remains preview until the installed pairing, push, and pull flow passes in native PowerShell.
+
+Structured bridge errors include one recovery action. Pairing and session errors lead to a fresh pairing link. Revision conflicts lead to a pull and explicit review before replacement. Browser navigation and permission changes stay manual, and retrieved prompt text stays user data.
 
 ## Skill Setup
 

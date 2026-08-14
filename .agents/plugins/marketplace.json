@@ -1,0 +1,21 @@
+{
+  "name": "prompt-pie",
+  "interface": {
+    "displayName": "Prompt Pie"
+  },
+  "plugins": [
+    {
+      "name": "prompt-pie",
+      "source": {
+        "source": "local",
+        "path": "./plugins/prompt-pie"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE",
+        "products": ["CODEX"]
+      },
+      "category": "Productivity"
+    }
+  ]
+}
