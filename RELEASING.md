@@ -23,13 +23,14 @@ Keep both plugin manifests synchronized. Bump the plugin version when its packag
    npm test
    ```
 
-2. Preview and inspect the npm tarball:
+2. Preview and inspect the npm publish metadata and tarball with npm 11:
 
    ```bash
+   npm publish --dry-run --json
    npm pack --dry-run --json
    ```
 
-   Confirm it contains current `bin/`, `lib/`, `docs/`, `README.md`, `LICENSE`, and package metadata. Install the packed artifact into an isolated prefix and verify `ppie --version --json` reports `0.2.0`.
+   Confirm npm reports no package corrections and the tarball contains current `bin/`, `lib/`, `docs/`, `README.md`, `LICENSE`, and package metadata. Install the packed artifact into an isolated prefix, confirm both `ppie` and `promptpie` command shims exist, and verify `ppie --version --json` reports `0.2.0`.
 
 3. Validate repository and implicit personal marketplace installs with disposable OS, Codex, and Prompt Pie homes:
 

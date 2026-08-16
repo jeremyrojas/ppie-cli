@@ -25,6 +25,7 @@ const MARKETPLACE = join(REPO, '.agents', 'plugins', 'marketplace.json');
 const SKILL = join(PLUGIN, 'skills', 'prompt-pie', 'SKILL.md');
 const REFERENCE = join(PLUGIN, 'skills', 'prompt-pie', 'references', 'cli-contract.md');
 const LOGO = join(PLUGIN, 'assets', 'prompt-pie-logo.png');
+const PACKAGE = join(REPO, 'package.json');
 const LOGO_PATH = './assets/prompt-pie-logo.png';
 const LOGO_SHA256 = '02d88dad627dfdaa22f2b247811e962d3a3bcb645cced916be69d51fd50f0ed7';
 const PLUGIN_AUTHOR = 'Jeremy Devz';
@@ -153,6 +154,49 @@ describe('Prompt Pie plugin package', () => {
     assert.deepEqual(JSON.parse(result.stdout), { ok: true, command: 'version', version: '0.2.0' });
   });
 
+  it('packs both CLI commands without npm publish corrections', () => {
+    const expectedBin = {
+      ppie: 'bin/ppie.mjs',
+      promptpie: 'bin/ppie.mjs',
+    };
+    const expectedRepository = {
+      type: 'git',
+      url: 'git+https://github.com/jeremyrojas/ppie-cli.git',
+    };
+    const sourcePackage = readJson(PACKAGE);
+    assert.deepEqual(sourcePackage.bin, expectedBin);
+    assert.deepEqual(sourcePackage.repository, expectedRepository);
+
+    const publish = runNpm(['publish', '--dry-run', '--json']);
+    assert.equal(publish.status, 0, `${publish.stderr}\n${publish.stdout}`);
+    assert.doesNotMatch(publish.stderr, /auto-corrected|errors corrected/i);
+
+    const archiveDir = makeTemp('ppie-npm-pack-');
+    const packed = runNpm(['pack', '--json', '--pack-destination', archiveDir]);
+    assert.equal(packed.status, 0, `${packed.stderr}\n${packed.stdout}`);
+    const [{ filename, files }] = JSON.parse(packed.stdout);
+    assert.ok(files.some(file => file.path === 'bin/ppie.mjs'));
+
+    const prefix = makeTemp('ppie-npm-install-');
+    const installed = runNpm([
+      'install', '--prefix', prefix, '--ignore-scripts', '--no-audit', '--no-fund', join(archiveDir, filename),
+    ]);
+    assert.equal(installed.status, 0, `${installed.stderr}\n${installed.stdout}`);
+
+    const installedPackage = readJson(join(prefix, 'node_modules', 'promptpie', 'package.json'));
+    assert.deepEqual(installedPackage.bin, expectedBin);
+    assert.deepEqual(installedPackage.repository, expectedRepository);
+    const shimExtension = process.platform === 'win32' ? '.cmd' : '';
+    for (const command of Object.keys(expectedBin)) {
+      assert.equal(existsSync(join(prefix, 'node_modules', '.bin', `${command}${shimExtension}`)), true);
+    }
+    const version = spawnSync(process.execPath, [
+      join(prefix, 'node_modules', 'promptpie', expectedBin.ppie), '--version', '--json',
+    ], { encoding: 'utf8', timeout: 10_000 });
+    assert.equal(version.status, 0, version.stderr);
+    assert.deepEqual(JSON.parse(version.stdout), { ok: true, command: 'version', version: '0.2.0' });
+  });
+
   it('pairs with production without opening a browser', () => {
     const home = makeTemp('ppie-plugin-pair-');
     const result = runNodeCli([
@@ -246,6 +290,15 @@ function runNodeCli(args, home) {
     env: { ...process.env, PPIE_HOME: home, PPIE_BROWSER_OPEN: '0' },
     encoding: 'utf8',
     timeout: 10_000,
+  });
+}
+
+function runNpm(args) {
+  return spawnSync('npm', args, {
+    cwd: REPO,
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+    timeout: 30_000,
   });
 }
 
