@@ -294,8 +294,12 @@ function runNodeCli(args, home) {
 }
 
 function runNpm(args) {
-  const command = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  return spawnSync(command, args, { cwd: REPO, encoding: 'utf8', timeout: 30_000 });
+  return spawnSync('npm', args, {
+    cwd: REPO,
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+    timeout: 30_000,
+  });
 }
 
 function assertCodex(args, env) {
