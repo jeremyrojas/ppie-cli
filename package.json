@@ -7,11 +7,14 @@
   "bugs": {
     "url": "https://github.com/jeremyrojas/ppie-cli/issues"
   },
-  "repository": "git+https://github.com/jeremyrojas/ppie-cli.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeremyrojas/ppie-cli.git"
+  },
   "type": "module",
   "bin": {
-    "ppie": "./bin/ppie.mjs",
-    "promptpie": "./bin/ppie.mjs"
+    "ppie": "bin/ppie.mjs",
+    "promptpie": "bin/ppie.mjs"
   },
   "scripts": {
     "test": "node --test __tests__/*.test.mjs",
