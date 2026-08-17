@@ -72,7 +72,7 @@ describe('Prompt Pie plugin package', () => {
     ].sort());
     assert.equal(portable.$schema, 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json');
     assert.equal(portable.name, 'prompt-pie');
-    assert.equal(portable.version, '0.1.1');
+    assert.equal(portable.version, '0.1.2');
     assert.deepEqual(portable.author, {
       name: PLUGIN_AUTHOR,
       url: 'https://github.com/jeremyrojas',
@@ -84,6 +84,10 @@ describe('Prompt Pie plugin package', () => {
     }
     assert.equal(codex.skills, './skills/');
     assert.equal(codex.interface.displayName, 'Prompt Pie');
+    assert.equal(codex.interface.shortDescription, 'Draft, refine, and preview prompts and skills visually.');
+    assert.match(codex.interface.longDescription, /^Prompt Pie is a local-first, privacy-friendly visual workspace for drafting, refining, previewing, and storing prompts and single-file skill drafts\./);
+    assert.equal(codex.interface.privacyPolicyURL, 'https://app.promptpie.dev/privacy');
+    assert.equal(codex.interface.termsOfServiceURL, 'https://app.promptpie.dev/terms');
     assert.equal(codex.interface.developerName, PLUGIN_AUTHOR);
     assert.equal(codex.interface.brandColor, '#F5C542');
     for (const field of ['composerIcon', 'logo', 'logoDark']) {
@@ -93,8 +97,8 @@ describe('Prompt Pie plugin package', () => {
     assert.equal(createHash('sha256').update(readFileSync(LOGO)).digest('hex'), LOGO_SHA256);
     assert.deepEqual(codex.interface.defaultPrompt, [
       'Connect to Prompt Pie.',
-      'Send this prompt or single-file skill draft to Prompt Pie.',
-      'Get my edited prompt or skill draft.',
+      'Send this prompt to Prompt Pie for visual editing.',
+      'Send this SKILL.md draft to Prompt Pie for visual editing.',
     ]);
     assert.equal(Object.hasOwn(codex, 'mcpServers'), false);
     assert.equal(Object.hasOwn(codex, 'hooks'), false);
@@ -121,7 +125,7 @@ describe('Prompt Pie plugin package', () => {
     const reference = readFileSync(REFERENCE, 'utf8');
     assert.match(skill, SKILL_FRONTMATTER);
     assert.match(skill.replace(/\r?\n/g, '\r\n'), SKILL_FRONTMATTER);
-    for (const phrase of ['Connect to Prompt Pie', 'send one prompt or single-file skill draft', 'get the edited document', '$prompt-pie']) {
+    for (const phrase of ['Connect to Prompt Pie', 'send a regular prompt or single-file SKILL.md draft', 'get the edited document', '$prompt-pie']) {
       assert.match(skill.toLowerCase(), new RegExp(escapeRegExp(phrase.toLowerCase())));
     }
     assert.match(skill, /0\.2\.0 or newer/);
@@ -130,6 +134,8 @@ describe('Prompt Pie plugin package', () => {
     assert.match(skill, /stdin/);
     assert.match(skill, /browser choice, navigation, and permission changes to the user/);
     assert.match(skill, /one prompt-sized document/);
+    assert.match(skill, /Regular prompts are first-class documents/);
+    assert.match(skill, /For a regular prompt/);
     assert.match(skill, /visual Markdown preview/);
     assert.match(skill, /long-content handoff/);
     assert.match(skill, /~\/.promptpie\/skills/);
@@ -267,11 +273,11 @@ describe('Prompt Pie plugin package', () => {
 
     const installedFiles = sourceFiles(codexHome);
     for (const suffix of [
-      join('prompt-pie', '0.1.1', 'plugin.json'),
-      join('prompt-pie', '0.1.1', '.codex-plugin', 'plugin.json'),
-      join('prompt-pie', '0.1.1', 'skills', 'prompt-pie', 'SKILL.md'),
-      join('prompt-pie', '0.1.1', 'skills', 'prompt-pie', 'references', 'cli-contract.md'),
-      join('prompt-pie', '0.1.1', 'assets', 'prompt-pie-logo.png'),
+      join('prompt-pie', '0.1.2', 'plugin.json'),
+      join('prompt-pie', '0.1.2', '.codex-plugin', 'plugin.json'),
+      join('prompt-pie', '0.1.2', 'skills', 'prompt-pie', 'SKILL.md'),
+      join('prompt-pie', '0.1.2', 'skills', 'prompt-pie', 'references', 'cli-contract.md'),
+      join('prompt-pie', '0.1.2', 'assets', 'prompt-pie-logo.png'),
     ]) {
       assert.ok(
         installedFiles.some(path => path.endsWith(suffix)),
