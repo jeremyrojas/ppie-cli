@@ -2,6 +2,12 @@
 
 Use the installed `ppie` executable for bridge operations. The minimum supported CLI version is `0.2.0`, with Node.js 18 or newer.
 
+## Scope
+
+Each bridge operation carries one prompt-sized document. A single-file skill draft uses the complete contents of one `SKILL.md` file as prompt content. A local file can supply that document for a long-content handoff. Prompt Pie provides the visual Markdown preview surface after the user completes pairing and opens the canvas manually.
+
+The bridge finishes with a pushed or pulled document. Local skill storage and linking remain separate user-directed CLI work: `ppie skill import <name> <file>` stores a local source under `~/.promptpie/skills`, and `ppie skill link <name> codex` stages the reviewed source alongside `~/.agents/skills`. Future work includes automatic share links, whole-folder transfer, “Open this skill,” “Show how this skill flows,” and direct application into `~/.agents/skills`.
+
 ## Commands and JSON
 
 Version discovery:

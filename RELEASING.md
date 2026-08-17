@@ -9,10 +9,10 @@ Publish manually when you want `npm i -g promptpie` and `npx promptpie` users to
 The npm package and Codex plugin have independent versions:
 
 - `package.json` is `0.2.0` for the first public companion-capable CLI release.
-- `plugins/prompt-pie/plugin.json` and its Codex overlay are `0.1.0`.
+- `plugins/prompt-pie/plugin.json` and its Codex overlay are `0.1.1`.
 - The Prompt Pie skill requires CLI `0.2.0` or newer.
 
-Keep both plugin manifests synchronized. Bump the plugin version when its packaged skill, reference, or interface changes. Bump the npm version when the CLI package changes.
+Keep both plugin manifests synchronized. Bump the plugin version when its packaged skill, reference, or interface changes. A patch bump covers truthful positioning and activation-language updates that leave the CLI protocol unchanged. Bump the npm version when the CLI package changes.
 
 ## Pre-merge checklist
 
@@ -23,14 +23,15 @@ Keep both plugin manifests synchronized. Bump the plugin version when its packag
    npm test
    ```
 
-2. Preview and inspect the npm publish metadata and tarball with npm 11:
+2. Preview and inspect the npm tarball with npm 11:
 
    ```bash
-   npm publish --dry-run --json
    npm pack --dry-run --json
    ```
 
    Confirm npm reports no package corrections and the tarball contains current `bin/`, `lib/`, `docs/`, `README.md`, `LICENSE`, and package metadata. Install the packed artifact into an isolated prefix, confirm both `ppie` and `promptpie` command shims exist, and verify `ppie --version --json` reports `0.2.0`.
+
+   For an npm CLI release, set the new `package.json` version first, then also run `npm publish --dry-run --json` before publishing. npm rejects a dry run for a version that already exists in the registry.
 
 3. Validate repository and implicit personal marketplace installs with disposable OS, Codex, and Prompt Pie homes:
 
@@ -38,7 +39,7 @@ Keep both plugin manifests synchronized. Bump the plugin version when its packag
    RUN_CODEX_PLUGIN_ACCEPTANCE=1 npm run test:plugin
    ```
 
-   Confirm the installed plugin has one skill and no MCP server or hooks. Run activation checks in a fresh task for `$prompt-pie`, connect, send, get, an explanation-only request, and a contextual “send that one” follow-up.
+   Confirm the installed plugin has one skill and no MCP server or hooks. Run activation checks in a fresh task for `$prompt-pie`, connect, send, get, a single-file `SKILL.md` draft, an explanation-only request, and a contextual “send that one” follow-up. Confirm that a skill draft remains a one-document handoff until a separate user-directed local skill command finalizes it.
 
 4. From the Prompt Pie repository, run the isolated browser harness against this CLI checkout:
 
