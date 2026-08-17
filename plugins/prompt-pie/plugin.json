@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "prompt-pie",
-  "version": "0.1.0",
-  "description": "Connect Codex to Prompt Pie to send prompts and retrieve edited prompts through the local ppie companion.",
+  "version": "0.1.1",
+  "description": "Bring prompts and single-file skill drafts to a local-first, privacy-friendly Prompt Pie workspace for visual Markdown preview, refinement, and retrieval through the local ppie companion.",
   "author": {
     "name": "Jeremy Devz",
     "url": "https://github.com/jeremyrojas"
@@ -10,5 +10,5 @@
   "homepage": "https://promptpie.dev/",
   "repository": "https://github.com/jeremyrojas/ppie-cli",
   "license": "MIT",
-  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "local-companion"]
+  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "local-first", "local-companion"]
 }

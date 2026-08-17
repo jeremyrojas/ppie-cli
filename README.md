@@ -2,7 +2,7 @@
 
 `promptpie` is the npm package for the Prompt Pie CLI. The main command is `ppie`.
 
-Use it to pair Prompt Pie with local prompt workflows and keep AI coding skills in one local source of truth.
+Use it to draft, write, refine, and keep reusable prompts and single-file AI coding skills in local storage. Prompt Pie is local-first and privacy-friendly: local skill sources stay in one place, and reviewed skills can be staged alongside your agent skill directories.
 
 - Docs: https://docs.promptpie.dev/cli
 - Prompt Pie: https://promptpie.dev
@@ -105,7 +105,13 @@ The versioned HTTP contract and security lifecycle are documented in [`docs/loca
 
 ## Codex Plugin
 
-The Prompt Pie plugin lets Codex connect to a signed-out Prompt Pie canvas, send one prompt for editing, and retrieve the edited prompt through the local `ppie` companion. It requires Node.js 18 or newer and `promptpie` CLI 0.2.0 or newer.
+The Prompt Pie plugin gives Codex a local-first, privacy-friendly workspace for rough prompts, writing, refinement, and single-file skill drafts. It connects to a signed-out Prompt Pie canvas, sends one prompt-sized document for visual Markdown preview, and retrieves the edited document through the local `ppie` companion. It requires Node.js 18 or newer and `promptpie` CLI 0.2.0 or newer.
+
+Send the complete contents of one `SKILL.md` file when you want to review a skill draft. Prompt Pie keeps that draft available for visual Markdown preview without changing your local skill directories. A small example skill makes a useful way to learn or demo how its frontmatter and instructions work. After you retrieve and review the draft, use the local skill commands to store it under `~/.promptpie/skills` and link it into `~/.agents/skills` when you are ready to finalize it.
+
+For a long prompt or skill draft already in your workspace, ask Codex to send that one file to Prompt Pie. The bridge can hand off its full contents without requiring a wall of pasted text.
+
+Each bridge request carries one prompt-sized document. Future work includes automatic share-link creation, whole-folder transfer, “Open this skill,” “Show how this skill flows,” and direct application into `~/.agents/skills`.
 
 Add this repository as a Codex marketplace and install the plugin:
 
@@ -117,8 +123,8 @@ codex plugin add prompt-pie@prompt-pie --json
 Start a fresh Codex task after installation. Invoke the skill directly with `$prompt-pie`, or ask:
 
 - “Connect to Prompt Pie.”
-- “Send this prompt to Prompt Pie.”
-- “Get my edited prompt.”
+- “Send this prompt or single-file skill draft to Prompt Pie.”
+- “Get my edited prompt or skill draft.”
 
 Codex prepares pairing with this browser-suppressed command:
 

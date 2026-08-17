@@ -72,7 +72,7 @@ describe('Prompt Pie plugin package', () => {
     ].sort());
     assert.equal(portable.$schema, 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json');
     assert.equal(portable.name, 'prompt-pie');
-    assert.equal(portable.version, '0.1.0');
+    assert.equal(portable.version, '0.1.1');
     assert.deepEqual(portable.author, {
       name: PLUGIN_AUTHOR,
       url: 'https://github.com/jeremyrojas',
@@ -93,8 +93,8 @@ describe('Prompt Pie plugin package', () => {
     assert.equal(createHash('sha256').update(readFileSync(LOGO)).digest('hex'), LOGO_SHA256);
     assert.deepEqual(codex.interface.defaultPrompt, [
       'Connect to Prompt Pie.',
-      'Send this prompt to Prompt Pie.',
-      'Get my edited prompt.',
+      'Send this prompt or single-file skill draft to Prompt Pie.',
+      'Get my edited prompt or skill draft.',
     ]);
     assert.equal(Object.hasOwn(codex, 'mcpServers'), false);
     assert.equal(Object.hasOwn(codex, 'hooks'), false);
@@ -121,7 +121,7 @@ describe('Prompt Pie plugin package', () => {
     const reference = readFileSync(REFERENCE, 'utf8');
     assert.match(skill, SKILL_FRONTMATTER);
     assert.match(skill.replace(/\r?\n/g, '\r\n'), SKILL_FRONTMATTER);
-    for (const phrase of ['Connect to Prompt Pie', 'send this prompt to Prompt Pie', 'get my edited prompt', '$prompt-pie']) {
+    for (const phrase of ['Connect to Prompt Pie', 'send one prompt or single-file skill draft', 'get the edited document', '$prompt-pie']) {
       assert.match(skill.toLowerCase(), new RegExp(escapeRegExp(phrase.toLowerCase())));
     }
     assert.match(skill, /0\.2\.0 or newer/);
@@ -129,6 +129,13 @@ describe('Prompt Pie plugin package', () => {
     assert.match(skill, /ppie prompt push - --json/);
     assert.match(skill, /stdin/);
     assert.match(skill, /browser choice, navigation, and permission changes to the user/);
+    assert.match(skill, /one prompt-sized document/);
+    assert.match(skill, /visual Markdown preview/);
+    assert.match(skill, /long-content handoff/);
+    assert.match(skill, /~\/.promptpie\/skills/);
+    assert.match(skill, /~\/.agents\/skills/);
+    assert.match(reference, /whole-folder transfer/);
+    assert.match(reference, /direct application into `~\/\.agents\/skills`/);
     assert.doesNotMatch(`${skill}\n${reference}`, /mcpServers|\.mcp\.json|hooks\.json|codex plugin.*browser/i);
     assert.match(reference, new RegExp(escapeRegExp(PAIR_COMMAND)));
     assert.match(reference, /browserOpened.*false/);
@@ -154,7 +161,7 @@ describe('Prompt Pie plugin package', () => {
     assert.deepEqual(JSON.parse(result.stdout), { ok: true, command: 'version', version: '0.2.0' });
   });
 
-  it('packs both CLI commands without npm publish corrections', () => {
+  it('packs both CLI commands without package corrections', () => {
     const expectedBin = {
       ppie: 'bin/ppie.mjs',
       promptpie: 'bin/ppie.mjs',
@@ -167,9 +174,9 @@ describe('Prompt Pie plugin package', () => {
     assert.deepEqual(sourcePackage.bin, expectedBin);
     assert.deepEqual(sourcePackage.repository, expectedRepository);
 
-    const publish = runNpm(['publish', '--dry-run', '--json']);
-    assert.equal(publish.status, 0, `${publish.stderr}\n${publish.stdout}`);
-    assert.doesNotMatch(publish.stderr, /auto-corrected|errors corrected/i);
+    const preview = runNpm(['pack', '--dry-run', '--json']);
+    assert.equal(preview.status, 0, `${preview.stderr}\n${preview.stdout}`);
+    assert.doesNotMatch(preview.stderr, /auto-corrected|errors corrected/i);
 
     const archiveDir = makeTemp('ppie-npm-pack-');
     const packed = runNpm(['pack', '--json', '--pack-destination', archiveDir]);
@@ -260,11 +267,11 @@ describe('Prompt Pie plugin package', () => {
 
     const installedFiles = sourceFiles(codexHome);
     for (const suffix of [
-      join('prompt-pie', '0.1.0', 'plugin.json'),
-      join('prompt-pie', '0.1.0', '.codex-plugin', 'plugin.json'),
-      join('prompt-pie', '0.1.0', 'skills', 'prompt-pie', 'SKILL.md'),
-      join('prompt-pie', '0.1.0', 'skills', 'prompt-pie', 'references', 'cli-contract.md'),
-      join('prompt-pie', '0.1.0', 'assets', 'prompt-pie-logo.png'),
+      join('prompt-pie', '0.1.1', 'plugin.json'),
+      join('prompt-pie', '0.1.1', '.codex-plugin', 'plugin.json'),
+      join('prompt-pie', '0.1.1', 'skills', 'prompt-pie', 'SKILL.md'),
+      join('prompt-pie', '0.1.1', 'skills', 'prompt-pie', 'references', 'cli-contract.md'),
+      join('prompt-pie', '0.1.1', 'assets', 'prompt-pie-logo.png'),
     ]) {
       assert.ok(
         installedFiles.some(path => path.endsWith(suffix)),
