@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "prompt-pie",
-  "version": "0.1.1",
-  "description": "Bring prompts and single-file skill drafts to a local-first, privacy-friendly Prompt Pie workspace for visual Markdown preview, refinement, and retrieval through the local ppie companion.",
+  "version": "0.1.2",
+  "description": "Draft, refine, and preview prompts and skills visually through a local-first, privacy-friendly Prompt Pie workspace and local ppie companion.",
   "author": {
     "name": "Jeremy Devz",
     "url": "https://github.com/jeremyrojas"
@@ -10,5 +10,5 @@
   "homepage": "https://promptpie.dev/",
   "repository": "https://github.com/jeremyrojas/ppie-cli",
   "license": "MIT",
-  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "local-first", "local-companion"]
+  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "visual-editing", "local-first", "local-companion"]
 }

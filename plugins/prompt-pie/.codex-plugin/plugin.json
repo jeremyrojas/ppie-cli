@@ -1,7 +1,7 @@
 {
   "name": "prompt-pie",
-  "version": "0.1.1",
-  "description": "Bring prompts and single-file skill drafts to a local-first, privacy-friendly Prompt Pie workspace for visual Markdown preview, refinement, and retrieval through the local ppie companion.",
+  "version": "0.1.2",
+  "description": "Draft, refine, and preview prompts and skills visually through a local-first, privacy-friendly Prompt Pie workspace and local ppie companion.",
   "author": {
     "name": "Jeremy Devz",
     "url": "https://github.com/jeremyrojas"
@@ -9,23 +9,25 @@
   "homepage": "https://promptpie.dev/",
   "repository": "https://github.com/jeremyrojas/ppie-cli",
   "license": "MIT",
-  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "local-first", "local-companion"],
+  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "visual-editing", "local-first", "local-companion"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Prompt Pie",
-    "shortDescription": "Draft prompts and skills with Markdown preview",
-    "longDescription": "Prompt Pie is a local-first, privacy-friendly workspace for prompts and single-file skill drafts. Connect Codex to send one prompt-sized document for visual Markdown preview and refinement, then retrieve it when ready. Local skill files can stay staged alongside .agents/skills until you finalize them.",
+    "shortDescription": "Draft, refine, and preview prompts and skills visually.",
+    "longDescription": "Prompt Pie is a local-first, privacy-friendly visual workspace for drafting, refining, previewing, and storing prompts and single-file skill drafts. Connect Codex to send one prompt-sized document for visual editing, then retrieve it when ready. Local skill sources can stay staged alongside .agents/skills until user-directed finalization.",
     "developerName": "Jeremy Devz",
     "category": "Productivity",
     "capabilities": ["Local", "Write"],
+    "privacyPolicyURL": "https://app.promptpie.dev/privacy",
+    "termsOfServiceURL": "https://app.promptpie.dev/terms",
     "brandColor": "#F5C542",
     "composerIcon": "./assets/prompt-pie-logo.png",
     "logo": "./assets/prompt-pie-logo.png",
     "logoDark": "./assets/prompt-pie-logo.png",
     "defaultPrompt": [
       "Connect to Prompt Pie.",
-      "Send this prompt or single-file skill draft to Prompt Pie.",
-      "Get my edited prompt or skill draft."
+      "Send this prompt to Prompt Pie for visual editing.",
+      "Send this SKILL.md draft to Prompt Pie for visual editing."
     ]
   }
 }
