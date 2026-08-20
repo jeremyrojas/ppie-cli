@@ -6,7 +6,7 @@ Use the installed `ppie` executable for bridge operations. The minimum supported
 
 Each bridge operation carries one prompt-sized document. A regular prompt uses its title and full content as that document. A single-file skill draft uses the complete contents of one `SKILL.md` file as prompt content. A local file can supply either document for a long-content handoff. Prompt Pie provides the visual Markdown preview surface after the user completes pairing and opens the canvas manually.
 
-The bridge finishes with a pushed or pulled document. Local skill storage and linking remain separate user-directed CLI work: `ppie skill import <name> <file>` stores a local source under `~/.promptpie/skills`, and `ppie skill link <name> codex` stages the reviewed source alongside `~/.agents/skills`. Future work includes automatic share links, whole-folder transfer, “Open this skill,” “Show how this skill flows,” and direct application into `~/.agents/skills`.
+The bridge finishes with a pushed or pulled document. Local skill storage and linking remain separate user-directed CLI work: `ppie skill import <name> <file>` stores a local source under `~/.promptpie/skills`, and `ppie skill link <name> codex` stages the reviewed source alongside `~/.agents/skills`. An explicit user request and confirmation are required before either local write or link action. Future work includes automatic share links, whole-folder transfer, “Open this skill,” “Show how this skill flows,” and direct application into `~/.agents/skills`.
 
 ## Commands and JSON
 

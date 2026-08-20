@@ -1,6 +1,6 @@
 {
   "name": "prompt-pie",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Draft, refine, and preview prompts and skills visually through a local-first, privacy-friendly Prompt Pie workspace and local ppie companion.",
   "author": {
     "name": "Jeremy Devz",
@@ -13,8 +13,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Prompt Pie",
-    "shortDescription": "Draft, refine, and preview prompts and skills visually.",
-    "longDescription": "Prompt Pie is a local-first, privacy-friendly visual workspace for drafting, refining, previewing, and storing prompts and single-file skill drafts. Connect Codex to send one prompt-sized document for visual editing, then retrieve it when ready. Local skill sources can stay staged alongside .agents/skills until user-directed finalization.",
+    "shortDescription": "Visual prompt & skill editor",
+    "longDescription": "Prompt Pie is a local-first, privacy-friendly visual workspace for drafting, refining, previewing, and storing prompts and single-file skill drafts. Connect Codex to send one prompt-sized document for visual editing, then retrieve it when ready. Connect, Send, and Get use a one-time, user-approved local companion setup with Node.js 18 or newer. Local skill sources can stay staged alongside .agents/skills until user-directed finalization.",
     "developerName": "Jeremy Devz",
     "category": "Productivity",
     "capabilities": ["Local", "Write"],

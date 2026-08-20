@@ -13,7 +13,7 @@ Use it to draft, write, refine, preview, and keep reusable prompts and single-fi
 Install globally:
 
 ```bash
-npm install -g promptpie@latest
+npm install -g promptpie@0.2.0
 ppie --version --json
 ```
 
@@ -107,6 +107,8 @@ The versioned HTTP contract and security lifecycle are documented in [`docs/loca
 
 The Prompt Pie plugin gives Codex a local-first, privacy-friendly visual workspace for drafting, refining, previewing, and storing regular prompts and single-file skill drafts. It connects to a signed-out Prompt Pie canvas, sends one prompt-sized document for visual editing, and retrieves the edited document through the local `ppie` companion. It requires Node.js 18 or newer and `promptpie` CLI 0.2.0 or newer.
 
+Connect, Send, and Get use a separate one-time companion setup. When `ppie` is missing or below 0.2.0, Prompt Pie asks before installing the reviewed `promptpie@0.2.0` npm package. The install places `ppie` and `promptpie` in the global npm prefix, which must be on `PATH`. Pairing runs a local companion only on `127.0.0.1` and gives you a one-time `app.promptpie.dev` link to open yourself; approve Local Network Access only when your browser asks. Explanation-only questions stay passive.
+
 Send the complete contents of one `SKILL.md` file when you want to review a skill draft. Prompt Pie keeps that draft available for visual Markdown preview without changing your local skill directories. A small example skill makes a useful way to learn or demo how its frontmatter and instructions work. After you retrieve and review the draft, use the local skill commands to store it under `~/.promptpie/skills` and link it into `~/.agents/skills` when you are ready to finalize it.
 
 For a long prompt or skill draft already in your workspace, ask Codex to send that one file to Prompt Pie. The bridge can hand off its full contents without requiring a wall of pasted text.
@@ -140,7 +142,7 @@ Upgrade the marketplace and CLI separately, then start a fresh Codex task:
 
 ```bash
 codex plugin marketplace upgrade prompt-pie --json
-npm install -g promptpie@latest
+npm install -g promptpie@0.2.0
 ppie --version --json
 ```
 

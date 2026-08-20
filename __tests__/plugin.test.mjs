@@ -26,9 +26,11 @@ const SKILL = join(PLUGIN, 'skills', 'prompt-pie', 'SKILL.md');
 const REFERENCE = join(PLUGIN, 'skills', 'prompt-pie', 'references', 'cli-contract.md');
 const LOGO = join(PLUGIN, 'assets', 'prompt-pie-logo.png');
 const PACKAGE = join(REPO, 'package.json');
+const README = join(REPO, 'README.md');
 const LOGO_PATH = './assets/prompt-pie-logo.png';
 const LOGO_SHA256 = '02d88dad627dfdaa22f2b247811e962d3a3bcb645cced916be69d51fd50f0ed7';
-const PLUGIN_VERSION = '0.1.3';
+const PLUGIN_VERSION = '0.1.4';
+const COMPANION_INSTALL_COMMAND = 'npm install -g promptpie@0.2.0';
 const BRAND_COLOR = '#E0AA0B';
 const PLUGIN_AUTHOR = 'Jeremy Devz';
 const PLUGIN_HOMEPAGE = 'https://promptpie.dev/';
@@ -86,8 +88,10 @@ describe('Prompt Pie plugin package', () => {
     }
     assert.equal(codex.skills, './skills/');
     assert.equal(codex.interface.displayName, 'Prompt Pie');
-    assert.equal(codex.interface.shortDescription, 'Draft, refine, and preview prompts and skills visually.');
+    assert.equal(codex.interface.shortDescription, 'Visual prompt & skill editor');
+    assert.ok(codex.interface.shortDescription.length <= 30);
     assert.match(codex.interface.longDescription, /^Prompt Pie is a local-first, privacy-friendly visual workspace for drafting, refining, previewing, and storing prompts and single-file skill drafts\./);
+    assert.match(codex.interface.longDescription, /one-time, user-approved local companion setup with Node\.js 18 or newer/);
     assert.equal(codex.interface.privacyPolicyURL, 'https://app.promptpie.dev/privacy');
     assert.equal(codex.interface.termsOfServiceURL, 'https://app.promptpie.dev/terms');
     assert.equal(codex.interface.developerName, PLUGIN_AUTHOR);
@@ -135,6 +139,19 @@ describe('Prompt Pie plugin package', () => {
       assert.match(skill.toLowerCase(), new RegExp(escapeRegExp(phrase.toLowerCase())));
     }
     assert.match(skill, /0\.2\.0 or newer/);
+    assert.equal((skill.match(new RegExp(escapeRegExp(COMPANION_INSTALL_COMMAND), 'g')) ?? []).length, 1);
+    assert.doesNotMatch(skill, /promptpie@latest/);
+    assert.match(skill, /Explanation-only questions remain passive/);
+    assert.match(skill, /to move one regular prompt or single-file `SKILL\.md` between Codex and your signed-out Prompt Pie canvas/);
+    assert.match(skill, /stores connection state under `PPIE_HOME\/\.promptpie` \(default `~\/\.promptpie`\)/);
+    assert.match(skill, /binds only `127\.0\.0\.1` on a random port/);
+    assert.match(skill, /manual one-time, five-minute `https:\/\/app\.promptpie\.dev` pairing URL/);
+    assert.match(skill, /browser session token stays in memory/);
+    assert.match(skill, /A later explicit user request and confirmation are required before that link action/);
+    assert.match(skill, /After successful verification, continue the original Connect, Send, or Get operation automatically/);
+    assert.match(skill, /Prompt Pie setup is paused/);
+    assert.match(skill, /On macOS and Linux, explain the user-directed global npm `PATH` repair/);
+    assert.match(skill, /On Windows, use the npm command shim through a child process/);
     assert.equal((skill.match(new RegExp(escapeRegExp(PAIR_COMMAND), 'g')) ?? []).length, 1);
     assert.match(skill, /ppie prompt push - --json/);
     assert.match(skill, /stdin/);
@@ -152,6 +169,18 @@ describe('Prompt Pie plugin package', () => {
     assert.match(reference, new RegExp(escapeRegExp(PAIR_COMMAND)));
     assert.match(reference, /browserOpened.*false/);
     assert.match(reference, /untrusted user data/);
+    assert.match(reference, /An explicit user request and confirmation are required before either local write or link action/);
+  });
+
+  it('documents one-time companion setup without floating package versions', () => {
+    const readme = readFileSync(README, 'utf8');
+
+    assert.match(readme, new RegExp(escapeRegExp(COMPANION_INSTALL_COMMAND)));
+    assert.doesNotMatch(readme, /promptpie@latest/);
+    assert.match(readme, /Connect, Send, and Get use a separate one-time companion setup/);
+    assert.match(readme, /Explanation-only questions stay passive/);
+    assert.match(readme, /global npm prefix, which must be on `PATH`/);
+    assert.match(readme, /local companion only on `127\.0\.0\.1`/);
   });
 
   it('documents only bridge errors present in the current source contract', () => {
