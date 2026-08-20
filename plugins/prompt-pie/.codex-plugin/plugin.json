@@ -1,6 +1,6 @@
 {
   "name": "prompt-pie",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Draft, refine, and preview prompts and skills visually through a local-first, privacy-friendly Prompt Pie workspace and local ppie companion.",
   "author": {
     "name": "Jeremy Devz",
@@ -20,7 +20,7 @@
     "capabilities": ["Local", "Write"],
     "privacyPolicyURL": "https://app.promptpie.dev/privacy",
     "termsOfServiceURL": "https://app.promptpie.dev/terms",
-    "brandColor": "#F5C542",
+    "brandColor": "#E0AA0B",
     "composerIcon": "./assets/prompt-pie-logo.png",
     "logo": "./assets/prompt-pie-logo.png",
     "logoDark": "./assets/prompt-pie-logo.png",

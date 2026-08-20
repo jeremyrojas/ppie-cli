@@ -28,6 +28,8 @@ const LOGO = join(PLUGIN, 'assets', 'prompt-pie-logo.png');
 const PACKAGE = join(REPO, 'package.json');
 const LOGO_PATH = './assets/prompt-pie-logo.png';
 const LOGO_SHA256 = '02d88dad627dfdaa22f2b247811e962d3a3bcb645cced916be69d51fd50f0ed7';
+const PLUGIN_VERSION = '0.1.3';
+const BRAND_COLOR = '#E0AA0B';
 const PLUGIN_AUTHOR = 'Jeremy Devz';
 const PLUGIN_HOMEPAGE = 'https://promptpie.dev/';
 const PLUGIN_REPOSITORY = 'https://github.com/jeremyrojas/ppie-cli';
@@ -72,7 +74,7 @@ describe('Prompt Pie plugin package', () => {
     ].sort());
     assert.equal(portable.$schema, 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json');
     assert.equal(portable.name, 'prompt-pie');
-    assert.equal(portable.version, '0.1.2');
+    assert.equal(portable.version, PLUGIN_VERSION);
     assert.deepEqual(portable.author, {
       name: PLUGIN_AUTHOR,
       url: 'https://github.com/jeremyrojas',
@@ -89,7 +91,11 @@ describe('Prompt Pie plugin package', () => {
     assert.equal(codex.interface.privacyPolicyURL, 'https://app.promptpie.dev/privacy');
     assert.equal(codex.interface.termsOfServiceURL, 'https://app.promptpie.dev/terms');
     assert.equal(codex.interface.developerName, PLUGIN_AUTHOR);
-    assert.equal(codex.interface.brandColor, '#F5C542');
+    assert.equal(codex.interface.brandColor, BRAND_COLOR);
+    assert.ok(
+      contrastRatio(codex.interface.brandColor, '#FFFFFF') >= 2,
+      `${codex.interface.brandColor} must have at least 2:1 contrast against white`,
+    );
     for (const field of ['composerIcon', 'logo', 'logoDark']) {
       assert.equal(codex.interface[field], LOGO_PATH);
       assert.equal(existsSync(join(PLUGIN, codex.interface[field])), true);
@@ -273,11 +279,11 @@ describe('Prompt Pie plugin package', () => {
 
     const installedFiles = sourceFiles(codexHome);
     for (const suffix of [
-      join('prompt-pie', '0.1.2', 'plugin.json'),
-      join('prompt-pie', '0.1.2', '.codex-plugin', 'plugin.json'),
-      join('prompt-pie', '0.1.2', 'skills', 'prompt-pie', 'SKILL.md'),
-      join('prompt-pie', '0.1.2', 'skills', 'prompt-pie', 'references', 'cli-contract.md'),
-      join('prompt-pie', '0.1.2', 'assets', 'prompt-pie-logo.png'),
+      join('prompt-pie', PLUGIN_VERSION, 'plugin.json'),
+      join('prompt-pie', PLUGIN_VERSION, '.codex-plugin', 'plugin.json'),
+      join('prompt-pie', PLUGIN_VERSION, 'skills', 'prompt-pie', 'SKILL.md'),
+      join('prompt-pie', PLUGIN_VERSION, 'skills', 'prompt-pie', 'references', 'cli-contract.md'),
+      join('prompt-pie', PLUGIN_VERSION, 'assets', 'prompt-pie-logo.png'),
     ]) {
       assert.ok(
         installedFiles.some(path => path.endsWith(suffix)),
@@ -290,6 +296,23 @@ describe('Prompt Pie plugin package', () => {
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
+}
+
+function contrastRatio(first, second) {
+  const firstLuminance = relativeLuminance(first);
+  const secondLuminance = relativeLuminance(second);
+  const [lighter, darker] = firstLuminance > secondLuminance
+    ? [firstLuminance, secondLuminance]
+    : [secondLuminance, firstLuminance];
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function relativeLuminance(hex) {
+  const channels = hex.slice(1).match(/.{2}/g).map(value => Number.parseInt(value, 16) / 255);
+  const [red, green, blue] = channels.map(channel => (
+    channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  ));
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 }
 
 function makeTemp(prefix) {
