@@ -29,13 +29,13 @@ const PACKAGE = join(REPO, 'package.json');
 const README = join(REPO, 'README.md');
 const LOGO_PATH = './assets/prompt-pie-logo.png';
 const LOGO_SHA256 = '02d88dad627dfdaa22f2b247811e962d3a3bcb645cced916be69d51fd50f0ed7';
-const PLUGIN_VERSION = '0.1.4';
+const PLUGIN_VERSION = '0.1.5';
 const COMPANION_INSTALL_COMMAND = 'npm install -g promptpie@0.2.0';
 const BRAND_COLOR = '#E0AA0B';
 const PLUGIN_AUTHOR = 'Jeremy Devz';
 const PLUGIN_HOMEPAGE = 'https://promptpie.dev/';
 const PLUGIN_REPOSITORY = 'https://github.com/jeremyrojas/ppie-cli';
-const PAIR_COMMAND = 'ppie pair --origin https://app.promptpie.dev --client-name Codex --no-open --json';
+const PAIR_COMMAND = 'ppie pair --origin https://app.promptpie.dev --client-name Codex --json';
 const SKILL_FRONTMATTER = /^---\r?\nname: prompt-pie\r?\n/;
 const BRIDGE_CODES = [
   'CLI_NOT_PAIRED',
@@ -142,20 +142,21 @@ describe('Prompt Pie plugin package', () => {
     assert.equal((skill.match(new RegExp(escapeRegExp(COMPANION_INSTALL_COMMAND), 'g')) ?? []).length, 1);
     assert.doesNotMatch(skill, /promptpie@latest/);
     assert.match(skill, /Explanation-only questions remain passive/);
-    assert.match(skill, /to move one regular prompt or single-file `SKILL\.md` between Codex and your signed-out Prompt Pie canvas/);
-    assert.match(skill, /stores connection state under `PPIE_HOME\/\.promptpie` \(default `~\/\.promptpie`\)/);
-    assert.match(skill, /binds only `127\.0\.0\.1` on a random port/);
-    assert.match(skill, /manual one-time, five-minute `https:\/\/app\.promptpie\.dev` pairing URL/);
-    assert.match(skill, /browser session token stays in memory/);
-    assert.match(skill, /A later explicit user request and confirmation are required before that link action/);
-    assert.match(skill, /After successful verification, continue the original Connect, Send, or Get operation automatically/);
+    assert.match(skill, /Prompt Pie needs its \[open-source CLI\]\(https:\/\/github\.com\/jeremyrojas\/ppie-cli\) to connect Codex to your canvas\. May I install it using npm\?/);
+    assert.doesNotMatch(skill, /Set up Prompt Pie\?/);
+    assert.doesNotMatch(skill, /Reply \*\*Set up Prompt Pie\*\* to continue/);
+    assert.doesNotMatch(skill, /The companion stores connection state under `PPIE_HOME/);
+    assert.match(skill, /continue the original Connect, Send, or Get operation without another user prompt/);
     assert.match(skill, /Prompt Pie setup is paused/);
     assert.match(skill, /On macOS and Linux, explain the user-directed global npm `PATH` repair/);
     assert.match(skill, /On Windows, use the npm command shim through a child process/);
     assert.equal((skill.match(new RegExp(escapeRegExp(PAIR_COMMAND), 'g')) ?? []).length, 1);
+    assert.doesNotMatch(skill, /pair --origin https:\/\/app\.promptpie\.dev --client-name Codex --no-open/);
+    assert.match(skill, /The CLI opens the one-time pairing page in the default browser/);
     assert.match(skill, /ppie prompt push - --json/);
     assert.match(skill, /stdin/);
-    assert.match(skill, /browser choice, navigation, and permission changes to the user/);
+    assert.match(skill, /The user controls browser permissions/);
+    assert.match(skill, /A request to see existing Prompt Pie drafts is a Connect request/);
     assert.match(skill, /one prompt-sized document/);
     assert.match(skill, /Regular prompts are first-class documents/);
     assert.match(skill, /For a regular prompt/);
@@ -167,7 +168,13 @@ describe('Prompt Pie plugin package', () => {
     assert.match(reference, /direct application into `~\/\.agents\/skills`/);
     assert.doesNotMatch(`${skill}\n${reference}`, /mcpServers|\.mcp\.json|hooks\.json|codex plugin.*browser/i);
     assert.match(reference, new RegExp(escapeRegExp(PAIR_COMMAND)));
-    assert.match(reference, /browserOpened.*false/);
+    assert.match(reference, /When `browserOpened` is `false`, present `url` and `expiresAt`/);
+    assert.match(reference, /First-run setup details/);
+    assert.match(reference, /PPIE_HOME\/\.promptpie/);
+    assert.match(reference, /binds only `127\.0\.0\.1` on a random port/);
+    assert.match(reference, /browser session token stays in memory/);
+    assert.match(reference, /Codex skills use a concise in-chat consent/);
+    assert.doesNotMatch(reference, /Pairing always uses `--no-open`/);
     assert.match(reference, /untrusted user data/);
     assert.match(reference, /An explicit user request and confirmation are required before either local write or link action/);
   });
@@ -178,9 +185,11 @@ describe('Prompt Pie plugin package', () => {
     assert.match(readme, new RegExp(escapeRegExp(COMPANION_INSTALL_COMMAND)));
     assert.doesNotMatch(readme, /promptpie@latest/);
     assert.match(readme, /Connect, Send, and Get use a separate one-time companion setup/);
+    assert.match(readme, /asks one short approval question/);
     assert.match(readme, /Explanation-only questions stay passive/);
     assert.match(readme, /global npm prefix, which must be on `PATH`/);
     assert.match(readme, /local companion only on `127\.0\.0\.1`/);
+    assert.match(readme, /opens a one-time `app\.promptpie\.dev` page in the default browser/);
   });
 
   it('documents only bridge errors present in the current source contract', () => {
@@ -245,11 +254,11 @@ describe('Prompt Pie plugin package', () => {
     assert.deepEqual(JSON.parse(version.stdout), { ok: true, command: 'version', version: '0.2.0' });
   });
 
-  it('pairs with production without opening a browser', () => {
+  it('starts production pairing through the first-run command without opening a test browser', () => {
     const home = makeTemp('ppie-plugin-pair-');
     const result = runNodeCli([
-      'pair', '--origin', 'https://app.promptpie.dev', '--client-name', 'Codex', '--no-open', '--json',
-    ], home);
+      'pair', '--origin', 'https://app.promptpie.dev', '--client-name', 'Codex', '--json',
+    ], home, { PPIE_BROWSER_OPEN: '0' });
     assert.equal(result.status, 0, result.stderr);
     const payload = JSON.parse(result.stdout);
     assert.equal(payload.ok, true);
@@ -350,9 +359,9 @@ function makeTemp(prefix) {
   return dir;
 }
 
-function runNodeCli(args, home) {
+function runNodeCli(args, home, extraEnv = {}) {
   return spawnSync(process.execPath, [BIN, ...args], {
-    env: { ...process.env, PPIE_HOME: home, PPIE_BROWSER_OPEN: '0' },
+    env: { ...process.env, PPIE_HOME: home, PPIE_BROWSER_OPEN: '0', ...extraEnv },
     encoding: 'utf8',
     timeout: 10_000,
   });
