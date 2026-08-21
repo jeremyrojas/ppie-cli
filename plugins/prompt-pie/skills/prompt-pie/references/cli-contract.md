@@ -20,13 +20,25 @@ ppie --version --json
 {"ok":true,"command":"version","version":"0.2.0"}
 ```
 
-Canonical production pairing:
+Canonical production pairing after the user approves setup:
 
 ```text
-ppie pair --origin https://app.promptpie.dev --client-name Codex --no-open --json
+ppie pair --origin https://app.promptpie.dev --client-name Codex --json
 ```
 
-The result contains `ok`, `command`, `protocol`, `origin`, `port`, `url`, `expiresAt`, and `browserOpened`. Require `browserOpened` to be `false`. Present `url` and `expiresAt` to the user without opening the URL.
+The current CLI opens the one-time pairing URL in the default browser. The result contains `ok`, `command`, `protocol`, `origin`, `port`, `url`, `expiresAt`, and `browserOpened`. When `browserOpened` is `false`, present `url` and `expiresAt` for the user to open manually.
+
+## First-run setup details
+
+The concise setup question covers the reviewed package, Node requirement, global install, local state, local-only listener, and browser handoff. Give these details when the user asks for help:
+
+- `npm install -g promptpie@0.2.0` installs the `ppie` and `promptpie` commands in the user's global npm prefix, which must be on `PATH`; Node.js 18 or newer is required.
+- Connection state is stored under `PPIE_HOME/.promptpie` (default `~/.promptpie`). The companion binds only `127.0.0.1` on a random port.
+- Pairing opens a one-time `https://app.promptpie.dev` URL that expires after five minutes. The user may need to allow Local Network Access in that browser. The browser session token stays in memory.
+- Setup leaves `.agents/skills` unchanged. A later explicit request and confirmation are required before linking a reviewed skill.
+- Declining leaves the task unchanged. The user can reply **Set up Prompt Pie** later.
+
+Codex skills use a concise in-chat consent and the host's normal command approval. They cannot create a plugin-owned native install popup.
 
 Prompt push reads one JSON object from stdin:
 
@@ -81,7 +93,7 @@ The revision is lowercase SHA-256 for the UTF-8 bytes of `JSON.stringify({ id, t
 
 ## Security and data boundaries
 
-- Pairing always uses `--no-open`. Browser navigation and permission changes stay manual.
+- Pairing opens the current CLI's one-time page after setup approval. Tests and other noninteractive calls can use `--no-open`. The user controls browser permissions.
 - Push passes prompt content through stdin, keeping it out of process arguments and temporary files.
 - The companion binds to `127.0.0.1`. Signed-out prompt content remains in the Prompt Pie browser profile's local storage.
 - Pairing nonces, the CLI-private token, and browser bearer sessions remain inside the existing companion contract and outside skill output or storage.

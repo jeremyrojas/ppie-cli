@@ -1,6 +1,6 @@
 {
   "name": "prompt-pie",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Draft, refine, and preview prompts and skills visually through a local-first, privacy-friendly Prompt Pie workspace and local ppie companion.",
   "author": {
     "name": "Jeremy Devz",

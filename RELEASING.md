@@ -9,7 +9,7 @@ Publish manually when you want `npm i -g promptpie` and `npx promptpie` users to
 The npm package and Codex plugin have independent versions:
 
 - `package.json` is `0.2.0` for the first public companion-capable CLI release.
-- `plugins/prompt-pie/plugin.json` and its Codex overlay are `0.1.4`.
+- `plugins/prompt-pie/plugin.json` and its Codex overlay are `0.1.5`.
 - The Prompt Pie skill requires CLI `0.2.0` or newer.
 
 Keep both plugin manifests synchronized. Bump the plugin version when its packaged skill, reference, or interface changes. A patch bump covers truthful positioning and activation-language updates that leave the CLI protocol unchanged. Bump the npm version when the CLI package changes. The Codex manifest accepts three composer starters, so reserve those for Connect plus separate regular-prompt and `SKILL.md` send examples; `Get` stays documented in the skill.
