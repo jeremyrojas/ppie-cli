@@ -21,6 +21,7 @@ const BIN = join(REPO, 'bin', 'ppie.mjs');
 const PLUGIN = join(REPO, 'plugins', 'prompt-pie');
 const PORTABLE_MANIFEST = join(PLUGIN, 'plugin.json');
 const CODEX_MANIFEST = join(PLUGIN, '.codex-plugin', 'plugin.json');
+const APP_MANIFEST = join(PLUGIN, '.app.json');
 const MARKETPLACE = join(REPO, '.agents', 'plugins', 'marketplace.json');
 const SKILL = join(PLUGIN, 'skills', 'prompt-pie', 'SKILL.md');
 const REFERENCE = join(PLUGIN, 'skills', 'prompt-pie', 'references', 'cli-contract.md');
@@ -29,7 +30,8 @@ const PACKAGE = join(REPO, 'package.json');
 const README = join(REPO, 'README.md');
 const LOGO_PATH = './assets/prompt-pie-logo.png';
 const LOGO_SHA256 = '02d88dad627dfdaa22f2b247811e962d3a3bcb645cced916be69d51fd50f0ed7';
-const PLUGIN_VERSION = '0.1.5';
+const PLUGIN_VERSION = '0.1.6';
+const APP_ID = 'asdk_app_6a9484d00aa48191b4b94b8be7ad4157';
 const COMPANION_INSTALL_COMMAND = 'npm install -g promptpie@0.2.0';
 const BRAND_COLOR = '#E0AA0B';
 const PLUGIN_AUTHOR = 'Jeremy Devz';
@@ -87,6 +89,7 @@ describe('Prompt Pie plugin package', () => {
       assert.deepEqual(codex[field], portable[field]);
     }
     assert.equal(codex.skills, './skills/');
+    assert.equal(codex.apps, './.app.json');
     assert.equal(codex.interface.displayName, 'Prompt Pie');
     assert.equal(codex.interface.shortDescription, 'Visual prompt & skill editor');
     assert.ok(codex.interface.shortDescription.length <= 30);
@@ -112,7 +115,14 @@ describe('Prompt Pie plugin package', () => {
     ]);
     assert.equal(Object.hasOwn(codex, 'mcpServers'), false);
     assert.equal(Object.hasOwn(codex, 'hooks'), false);
-    assert.equal(Object.hasOwn(codex, 'apps'), false);
+    assert.deepEqual(readJson(APP_MANIFEST), {
+      apps: {
+        'prompt-pie': {
+          id: APP_ID,
+          category: 'Productivity',
+        },
+      },
+    });
   });
 
   it('publishes the exact Codex-only marketplace contract', () => {
