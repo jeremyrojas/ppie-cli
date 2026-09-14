@@ -1,7 +1,7 @@
 {
   "name": "prompt-pie",
-  "version": "0.1.6",
-  "description": "Draft, refine, and preview prompts and skills visually through a local-first, privacy-friendly Prompt Pie workspace and local ppie companion.",
+  "version": "0.1.7",
+  "description": "Save, find, retrieve, and open Prompt Pie prompts and skills through the hosted OAuth app, with local companion workflows for guest and local use.",
   "author": {
     "name": "Jeremy Devz",
     "url": "https://github.com/jeremyrojas"
@@ -9,16 +9,16 @@
   "homepage": "https://promptpie.dev/",
   "repository": "https://github.com/jeremyrojas/ppie-cli",
   "license": "MIT",
-  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "visual-editing", "local-first", "local-companion"],
+  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "visual-editing", "oauth", "cloud", "local-companion"],
   "skills": "./skills/",
   "apps": "./.app.json",
   "interface": {
     "displayName": "Prompt Pie",
-    "shortDescription": "Visual prompt & skill editor",
-    "longDescription": "Prompt Pie is a local-first, privacy-friendly visual workspace for drafting, refining, previewing, and storing prompts and single-file skill drafts. Connect Codex to send one prompt-sized document for visual editing, then retrieve it when ready. Connect, Send, and Get use a one-time, user-approved local companion setup with Node.js 18 or newer. Local skill sources can stay staged alongside .agents/skills until user-directed finalization.",
+    "shortDescription": "Save, find prompts and skills",
+    "longDescription": "Prompt Pie connects Codex to the signed-in account through hosted OAuth for account-wide prompt and skill save, find, get, and open actions. Returned browser links open the owned canvas and focus the selected item. WebMCP can assist with the open page, and the local ppie companion supports explicit guest, local-canvas, and local CLI workflows.",
     "developerName": "Jeremy Devz",
     "category": "Productivity",
-    "capabilities": ["Local", "Write"],
+    "capabilities": ["Interactive", "Read", "Write", "Local"],
     "privacyPolicyURL": "https://app.promptpie.dev/privacy",
     "termsOfServiceURL": "https://app.promptpie.dev/terms",
     "brandColor": "#E0AA0B",
@@ -26,9 +26,9 @@
     "logo": "./assets/prompt-pie-logo.png",
     "logoDark": "./assets/prompt-pie-logo.png",
     "defaultPrompt": [
-      "Connect to Prompt Pie.",
-      "Send this prompt to Prompt Pie for visual editing.",
-      "Send this SKILL.md draft to Prompt Pie for visual editing."
+      "Save this prompt to my Launch canvas in Prompt Pie.",
+      "Find and get my exact Release helper skill from Prompt Pie.",
+      "Open my Launch canvas in Prompt Pie."
     ]
   }
 }

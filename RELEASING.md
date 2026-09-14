@@ -1,81 +1,110 @@
 # Releasing
 
-GitHub pushes do not publish this package to npm. The workflow in `.github/workflows/test.yml` only runs tests.
-
-Publish manually when you want `npm i -g promptpie` and `npx promptpie` users to receive a new version.
+The npm CLI and Codex plugin use separate versions and release paths. GitHub Actions runs tests only.
 
 ## Version contract
 
-The npm package and Codex plugin have independent versions:
+- `package.json` remains `0.2.0` for the companion-capable CLI release.
+- `plugins/prompt-pie/plugin.json` and `.codex-plugin/plugin.json` are `0.1.7`.
+- The local companion workflow requires CLI `0.2.0` or newer.
+- Bump the plugin version when its packaged skill, reference, app connection, or interface changes. A patch bump covers routing and discovery updates that preserve the hosted and local protocols.
+- Bump the npm version when CLI package behavior changes. The npm `files` list excludes the plugin bundle.
 
-- `package.json` is `0.2.0` for the first public companion-capable CLI release.
-- `plugins/prompt-pie/plugin.json` and its Codex overlay are `0.1.5`.
-- The Prompt Pie skill requires CLI `0.2.0` or newer.
+Keep both plugin manifests synchronized. Preserve `apps: "./.app.json"` in the Codex manifest and the hosted Prompt Pie app ID in `.app.json`. The three composer starters cover account-wide save, exact find/get, and open actions.
 
-Keep both plugin manifests synchronized. Bump the plugin version when its packaged skill, reference, or interface changes. A patch bump covers truthful positioning and activation-language updates that leave the CLI protocol unchanged. Bump the npm version when the CLI package changes. The Codex manifest accepts three composer starters, so reserve those for Connect plus separate regular-prompt and `SKILL.md` send examples; `Get` stays documented in the skill.
+## Plugin pre-merge checklist
 
-## Pre-merge checklist
+1. Validate the skill and plugin package:
 
-1. Run the focused and full checks:
+   ```bash
+   uv run --with pyyaml python /Users/jeremyrojas/.codex/skills/.system/skill-creator/scripts/quick_validate.py plugins/prompt-pie/skills/prompt-pie
+   uv run --with pyyaml python /Users/jeremyrojas/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/prompt-pie
+   ```
+
+2. Run the focused, full, and isolated marketplace checks:
 
    ```bash
    npm run test:plugin
    npm test
-   ```
-
-2. Preview and inspect the npm tarball with npm 11:
-
-   ```bash
-   npm pack --dry-run --json
-   ```
-
-   Confirm npm reports no package corrections and the tarball contains current `bin/`, `lib/`, `docs/`, `README.md`, `LICENSE`, and package metadata. Install the packed artifact into an isolated prefix, confirm both `ppie` and `promptpie` command shims exist, and verify `ppie --version --json` reports `0.2.0`.
-
-   For an npm CLI release, set the new `package.json` version first, then also run `npm publish --dry-run --json` before publishing. npm rejects a dry run for a version that already exists in the registry.
-
-3. Validate repository and implicit personal marketplace installs with disposable OS, Codex, and Prompt Pie homes:
-
-   ```bash
    RUN_CODEX_PLUGIN_ACCEPTANCE=1 npm run test:plugin
    ```
 
-   Confirm the installed plugin has one skill and no MCP server or hooks. Run activation checks in a fresh task for `$prompt-pie`, connect, send, get, a single-file `SKILL.md` draft, an explanation-only request, and a contextual “send that one” follow-up. Confirm that a skill draft remains a one-document handoff until a separate user-directed local skill command finalizes it.
+3. Confirm an installed bundle contains one skill, `.app.json`, and the Codex manifest's `apps` reference. Confirm the bundle contains no `mcpServers` or hooks.
 
-4. From the Prompt Pie repository, run the isolated browser harness against this CLI checkout:
+4. In a fresh Codex profile and fresh task, verify:
 
-   ```bash
-   PPIE_CLI_REPO=/absolute/path/to/ppie-cli npm run test:e2e:local-companion
-   ```
+   - signed-in account save resolves a named canvas by case-insensitive exact title and creates one prompt or skill after write confirmation;
+   - duplicate exact-title results require a user choice;
+   - account-wide find/get resolves an exact prompt and skill, and list results omit content;
+   - canvas and document browser URLs open the owned canvas and focus the selected document;
+   - an exact mutation retry reuses its idempotency key, and stale revision recovery retrieves the current document before another guarded mutation;
+   - returned titles and content remain untrusted data;
+   - an explicit guest or local-canvas request uses the local companion, while WebMCP stays page-local.
 
-   The harness must use `--no-open`, temporary `PPIE_HOME`, and a disposable browser profile. The system Chrome profile stays untouched.
+5. Confirm the Prompt Pie hosted contract dependency is merged and deployed. For plugin `0.1.7`, this dependency is `prompt-pie` PR #134 at merge commit `ea9a357d4ac304bc4e12c81b2027ab6a891afb5c`.
 
-## Post-merge publish and acceptance
+## Repository marketplace release
 
-1. Confirm npm authentication, publish the merged source, and verify the exact artifact:
+The repository marketplace reads `./plugins/prompt-pie` from the merged default branch. Merging the plugin PR makes the new bundle available to marketplace upgrades.
 
-   ```bash
-   npm whoami
-   npm publish
-   npm view promptpie@0.2.0 version
-   npm pack promptpie@0.2.0 --dry-run --json
-   ```
+Verify from the merged commit in a clean Codex profile:
 
-2. Install the exact registry package into an isolated prefix. Put its `node_modules/.bin` first on the acceptance task's `PATH`, resolve `ppie`, and verify JSON version `0.2.0`.
+```bash
+codex plugin marketplace add https://github.com/jeremyrojas/ppie-cli --json
+codex plugin add prompt-pie@prompt-pie --json
+```
 
-3. Install or upgrade the marketplace from the merged commit and install `prompt-pie@prompt-pie` in a clean Codex profile using that exact CLI path.
+Existing users upgrade the marketplace and begin a fresh task:
 
-4. In a dedicated signed-out browser profile, complete connect, send, browser edit, get, direct `$prompt-pie`, stale-revision conflict, disconnect recovery, and Local Network Access denial/recovery checks. Repeat the installed flow on macOS and native Windows PowerShell. Keep Windows labeled preview until its gate passes.
+```bash
+codex plugin marketplace upgrade prompt-pie --json
+codex plugin add prompt-pie@prompt-pie --json
+```
 
-5. Create and push the release tag only after the published artifact and installed-plugin checks pass:
+## Platform artifact and publication gate
 
-   ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
-   ```
+Create the full plugin ZIP from the exact merged commit so hidden app and Codex manifest files are included at the archive root:
 
-## Notes
+```bash
+git archive --format=zip --output /tmp/prompt-pie-plugin-0.1.7.zip <merged-commit>:plugins/prompt-pie
+unzip -l /tmp/prompt-pie-plugin-0.1.7.zip
+shasum -a 256 /tmp/prompt-pie-plugin-0.1.7.zip
+```
 
-- npm requires every publish to use a new `package.json` version.
-- Do not run `npm publish` from the old Prompt Pie app repo.
-- Keep release changes in this standalone repository: `github.com/jeremyrojas/ppie-cli`.
-- Publishing, production installed-plugin acceptance, and the availability announcement happen after the implementation PR merges.
+The archive must include:
+
+- `.app.json`;
+- `.codex-plugin/plugin.json` with `apps: "./.app.json"`;
+- `plugin.json`;
+- `skills/prompt-pie/SKILL.md` and its local companion reference;
+- the Prompt Pie logo asset.
+
+Upload the archive as a new OpenAI Platform plugin draft. Before the final confirmation, inspect the normalized manifest and retained bundle files. Publish version `0.1.7` only when the Platform path preserves `.app.json` and the `apps` reference to the hosted OAuth app.
+
+The Platform ZIP validator observed on August 30, 2026 excluded app references and retained skills. When that behavior appears, stop before confirmation and keep the existing published version unchanged. Platform confirmation and publication remain user-controlled actions.
+
+After Platform publication, install the exact published version in a clean profile, start a fresh task, connect through OAuth, and repeat the account-wide save/find/get/open acceptance above.
+
+## npm CLI release
+
+Run this section only for a CLI package change. Set a new `package.json` version before the dry run.
+
+```bash
+npm pack --dry-run --json
+npm publish --dry-run --json
+npm whoami
+npm publish
+npm view promptpie@<version> version
+npm pack promptpie@<version> --dry-run --json
+```
+
+Install the exact registry package into an isolated prefix. Put its `node_modules/.bin` first on the acceptance task's `PATH`, resolve both `ppie` and `promptpie`, and verify `ppie --version --json` reports the released version.
+
+Create and push the CLI release tag after registry and installed-package acceptance:
+
+```bash
+git tag v<version>
+git push origin v<version>
+```
+
+Keep npm publication, CLI tags, production flags, OAuth configuration, and Platform confirmation outside plugin-only repository releases.
