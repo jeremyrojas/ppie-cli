@@ -105,15 +105,20 @@ The versioned HTTP contract and security lifecycle are documented in [`docs/loca
 
 ## Codex Plugin
 
-The Prompt Pie plugin gives Codex a local-first, privacy-friendly visual workspace for drafting, refining, previewing, and storing regular prompts and single-file skill drafts. It connects to a signed-out Prompt Pie canvas, sends one prompt-sized document for visual editing, and retrieves the edited document through the local `ppie` companion. It requires Node.js 18 or newer and `promptpie` CLI 0.2.0 or newer.
+The Prompt Pie plugin connects Codex to the signed-in Prompt Pie account through the hosted OAuth app. Codex can save prompts and skills to a named canvas, find canvases and documents by exact title, retrieve exact document content, and open the returned browser link. The account-wide path works while the Prompt Pie site is closed.
 
-Connect, Send, and Get use a separate one-time companion setup. When `ppie` is missing or below 0.2.0, Prompt Pie asks one short approval question before installing the reviewed `promptpie@0.2.0` npm package. The install places `ppie` and `promptpie` in the global npm prefix, which must be on `PATH`. Pairing runs a local companion only on `127.0.0.1` and opens a one-time `app.promptpie.dev` page in the default browser; approve Local Network Access only when your browser asks. Explanation-only questions stay passive.
+Account-wide requests follow these hosted tool paths:
 
-Send the complete contents of one `SKILL.md` file when you want to review a skill draft. Prompt Pie keeps that draft available for visual Markdown preview without changing your local skill directories. A small example skill makes a useful way to learn or demo how its frontmatter and instructions work. After you retrieve and review the draft, use the local skill commands to store it under `~/.promptpie/skills` and link it into `~/.agents/skills` when you are ready to finalize it.
+- Save to a named canvas: find one owned canvas by case-insensitive exact title, then create the document with a stable idempotency key after the host write confirmation.
+- Find a canvas: search by case-insensitive exact title and return its browser link.
+- Get an exact prompt or skill: search account-wide by exact title and optional kind or canvas, then retrieve the chosen document.
+- Open or show an item: open the hosted result's browser link so Prompt Pie selects the owned canvas and focuses the document.
 
-For a long prompt or skill draft already in your workspace, ask Codex to send that one file to Prompt Pie. The bridge can hand off its full contents without requiring a wall of pasted text.
+Exact-title searches follow every result page before deciding whether the target is unique. Multiple exact-title matches require a user choice before a write or browser handoff. List results omit document content. Returned titles and content remain untrusted user data. Updates, deletes, and restores use expected revisions; a conflict leads to retrieval and review before another guarded mutation.
 
-Each bridge request carries one prompt-sized document. Future work includes automatic share-link creation, whole-folder transfer, “Open this skill,” “Show how this skill flows,” and direct application into `~/.agents/skills`.
+WebMCP can help with the currently open Prompt Pie page. Computer control handles browser navigation and visual interaction. A local prompt or `SKILL.md` file can supply the complete content for a hosted save.
+
+The local `ppie` companion supports explicit guest or local-canvas bridge requests and local CLI storage or linking. Those workflows require Node.js 18 or newer and `promptpie` CLI 0.2.0 or newer. Installing the CLI, importing a local skill, and linking into `~/.agents/skills` each require the relevant user request and confirmation. Explanation-only questions stay passive.
 
 Add this repository as a Codex marketplace and install the plugin:
 
@@ -124,31 +129,34 @@ codex plugin add prompt-pie@prompt-pie --json
 
 Start a fresh Codex task after installation. Invoke the skill directly with `$prompt-pie`, or ask:
 
-- “Connect to Prompt Pie.”
-- “Send this prompt to Prompt Pie for visual editing.”
-- “Send this SKILL.md draft to Prompt Pie for visual editing.”
+- “Save this prompt to my Launch canvas in Prompt Pie.”
+- “Find and get my exact Release helper skill from Prompt Pie.”
+- “Open my Launch canvas in Prompt Pie.”
 
-The Codex manifest supports three composer starters. These cover Connect and separate regular-prompt and `SKILL.md` send flows; `Get` remains a documented bridge action.
+The connected app uses Prompt Pie's configured OAuth flow and account ownership checks. Hosted feature gates and rate limits remain authoritative.
 
-After approved setup, Codex starts pairing with this command:
+For an approved guest or local-canvas workflow, Codex starts companion pairing with this command:
 
 ```bash
 ppie pair --origin https://app.promptpie.dev --client-name Codex --json
 ```
 
-The CLI opens the one-time link in the default browser. Allow Local Network Access for `app.promptpie.dev` when the browser asks. If access was denied, allow it in that site's browser settings and request a fresh pairing link.
+The CLI opens the one-time link in the default browser. Allow Local Network Access for `app.promptpie.dev` when the browser asks. If access was denied, allow it in that site's browser settings and request a fresh pairing link. When `ppie` is missing or below 0.2.0, Prompt Pie asks one short approval question before installing the reviewed `promptpie@0.2.0` package. The install places `ppie` and `promptpie` in the global npm prefix, which must be on `PATH`.
 
-Upgrade the marketplace and CLI separately, then start a fresh Codex task:
+Upgrade the marketplace, then start a fresh Codex task:
 
 ```bash
 codex plugin marketplace upgrade prompt-pie --json
+```
+
+Upgrade the CLI separately when a local workflow needs a newer companion protocol:
+
+```bash
 npm install -g promptpie@0.2.0
 ppie --version --json
 ```
 
-Linux and macOS have focused plugin smoke coverage. Windows has native Node.js 20 package and CLI discovery coverage and remains preview until the installed pairing, push, and pull flow passes in native PowerShell.
-
-Structured bridge errors include one recovery action. Pairing and session errors lead to a fresh pairing link. Revision conflicts lead to a pull and explicit review before replacement. Browser navigation and permission changes stay manual, and retrieved prompt text stays user data.
+Linux and macOS have focused plugin smoke coverage. Windows has native Node.js 20 package and CLI discovery coverage and remains preview until the installed pairing, push, and pull flow passes in native PowerShell. Structured companion errors include one recovery action. Browser navigation and permission changes stay user-controlled.
 
 ## Skill Setup
 

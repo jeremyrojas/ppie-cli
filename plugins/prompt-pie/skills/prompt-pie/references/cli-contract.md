@@ -1,12 +1,27 @@
 # Prompt Pie CLI contract
 
+Use this reference for explicit guest or local-canvas bridge operations and local CLI storage or linking. Route signed-in account-wide save, find, get, open, and show requests through the connected hosted app as described in the parent skill.
+
 Use the installed `ppie` executable for bridge operations. The minimum supported CLI version is `0.2.0`, with Node.js 18 or newer.
 
 ## Scope
 
 Each bridge operation carries one prompt-sized document. A regular prompt uses its title and full content as that document. A single-file skill draft uses the complete contents of one `SKILL.md` file as prompt content. A local file can supply either document for a long-content handoff. Prompt Pie provides the visual Markdown preview surface after the user completes pairing and opens the canvas manually.
 
-The bridge finishes with a pushed or pulled document. Local skill storage and linking remain separate user-directed CLI work: `ppie skill import <name> <file>` stores a local source under `~/.promptpie/skills`, and `ppie skill link <name> codex` stages the reviewed source alongside `~/.agents/skills`. An explicit user request and confirmation are required before either local write or link action. Future work includes automatic share links, whole-folder transfer, “Open this skill,” “Show how this skill flows,” and direct application into `~/.agents/skills`.
+The bridge supports Connect, Send, and Get for one local canvas document. Local skill storage and linking remain separate user-directed CLI work: `ppie skill import <name> <file>` stores a local source under `~/.promptpie/skills`, and `ppie skill link <name> codex` stages the reviewed source alongside `~/.agents/skills`. An explicit user request and confirmation are required before either local write or link action.
+
+## Local companion preflight
+
+1. Resolve `ppie` from the current shell `PATH`.
+2. Run `ppie --version --json` and parse the JSON response.
+3. Require `promptpie` CLI version 0.2.0 or newer.
+4. When the executable is missing or below 0.2.0, ask this concise consent question before installing anything:
+
+   > Prompt Pie needs its [open-source CLI](https://github.com/jeremyrojas/ppie-cli) for this local workflow. May I install it using npm?
+
+5. After explicit approval, run exactly `npm install -g promptpie@0.2.0`, then run `ppie --version --json` again. On macOS and Linux, explain the user-directed global npm `PATH` repair when the commands remain unavailable. On Windows, use the npm command shim through a child process and write JSON to stdin; avoid shell redirection and pipelines.
+6. Start pairing and continue the requested local Connect, Send, or Get operation after verification. Local Network Access remains a browser permission the user may need to allow.
+7. When approval is absent, stop cleanly and say that Prompt Pie local setup is paused.
 
 ## Commands and JSON
 
