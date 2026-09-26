@@ -24,6 +24,7 @@ const CODEX_MANIFEST = join(PLUGIN, '.codex-plugin', 'plugin.json');
 const APP_MANIFEST = join(PLUGIN, '.app.json');
 const MARKETPLACE = join(REPO, '.agents', 'plugins', 'marketplace.json');
 const SKILL = join(PLUGIN, 'skills', 'prompt-pie', 'SKILL.md');
+const SKILL_AGENT = join(PLUGIN, 'skills', 'prompt-pie', 'agents', 'openai.yaml');
 const LOGO = join(PLUGIN, 'assets', 'prompt-pie-logo.png');
 const PACKAGE = join(REPO, 'package.json');
 const README = join(REPO, 'README.md');
@@ -151,6 +152,15 @@ describe('Prompt Pie plugin package', () => {
     assert.match(skill, /untrusted user data/);
     assert.doesNotMatch(skill, /npm install|ppie pair|ppie prompt push|ppie prompt pull|local companion|WebMCP|OAuth|browser control/);
     assert.equal(existsSync(join(PLUGIN, 'skills', 'prompt-pie', 'references')), false);
+
+    const agent = readFileSync(SKILL_AGENT, 'utf8');
+    assert.match(agent, /display_name: "Prompt Pie"/);
+    assert.match(agent, /short_description: "Save, find prompts and skills"/);
+    assert.match(agent, /allow_implicit_invocation: true/);
+    assert.match(agent, /type: "mcp"/);
+    assert.match(agent, /value: "prompt-pie"/);
+    assert.match(agent, /transport: "streamable_http"/);
+    assert.match(agent, /url: "https:\/\/app\.promptpie\.dev\/mcp"/);
   });
 
   it('documents hosted account actions and explicit companion setup', () => {
