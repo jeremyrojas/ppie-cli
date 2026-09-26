@@ -6,8 +6,8 @@ The npm CLI and Codex plugin use separate versions and release paths. GitHub Act
 
 - `package.json` remains `0.2.0` for the companion-capable CLI release.
 - `plugins/prompt-pie/plugin.json` and `.codex-plugin/plugin.json` are `0.1.7`.
-- The local companion workflow requires CLI `0.2.0` or newer.
-- Bump the plugin version when its packaged skill, reference, app connection, or interface changes. A patch bump covers routing and discovery updates that preserve the hosted and local protocols.
+- The packaged plugin uses the hosted OAuth app for account-wide Prompt Pie actions.
+- Bump the plugin version when its packaged skill, app connection, or interface changes. A patch bump covers routing and discovery updates that preserve the hosted protocol.
 - Bump the npm version when CLI package behavior changes. The npm `files` list excludes the plugin bundle.
 
 Keep both plugin manifests synchronized. Preserve `apps: "./.app.json"` in the Codex manifest and the hosted Prompt Pie app ID in `.app.json`. The three composer starters cover account-wide save, exact find/get, and open actions.
@@ -39,7 +39,7 @@ Keep both plugin manifests synchronized. Preserve `apps: "./.app.json"` in the C
    - canvas and document browser URLs open the owned canvas and focus the selected document;
    - an exact mutation retry reuses its idempotency key, and stale revision recovery retrieves the current document before another guarded mutation;
    - returned titles and content remain untrusted data;
-   - an explicit guest or local-canvas request uses the local companion, while WebMCP stays page-local.
+   - a missing hosted tool stops safely and asks the user to reconnect or begin a fresh task.
 
 5. Confirm the Prompt Pie hosted contract dependency is merged and deployed. For plugin `0.1.7`, this dependency is `prompt-pie` PR #134 at merge commit `ea9a357d4ac304bc4e12c81b2027ab6a891afb5c`.
 
@@ -61,27 +61,21 @@ codex plugin marketplace upgrade prompt-pie --json
 codex plugin add prompt-pie@prompt-pie --json
 ```
 
-## Platform artifact and publication gate
+## Platform skill artifact and publication gate
 
-Create the full plugin ZIP from the exact merged commit so hidden app and Codex manifest files are included at the archive root:
+Create the hosted skill ZIP from the exact merged commit:
 
 ```bash
-git archive --format=zip --output /tmp/prompt-pie-plugin-0.1.7.zip <merged-commit>:plugins/prompt-pie
-unzip -l /tmp/prompt-pie-plugin-0.1.7.zip
-shasum -a 256 /tmp/prompt-pie-plugin-0.1.7.zip
+git archive --format=zip --prefix=prompt-pie/ --output /tmp/prompt-pie-hosted-skill-0.1.7.zip <merged-commit>:plugins/prompt-pie/skills/prompt-pie
+unzip -l /tmp/prompt-pie-hosted-skill-0.1.7.zip
+shasum -a 256 /tmp/prompt-pie-hosted-skill-0.1.7.zip
 ```
 
-The archive must include:
+The archive must include only:
 
-- `.app.json`;
-- `.codex-plugin/plugin.json` with `apps: "./.app.json"`;
-- `plugin.json`;
-- `skills/prompt-pie/SKILL.md` and its local companion reference;
-- the Prompt Pie logo asset.
+- `prompt-pie/SKILL.md`.
 
-Upload the archive as a new OpenAI Platform plugin draft. Before the final confirmation, inspect the normalized manifest and retained bundle files. Publish version `0.1.7` only when the Platform path preserves `.app.json` and the `apps` reference to the hosted OAuth app.
-
-The Platform ZIP validator observed on August 30, 2026 excluded app references and retained skills. When that behavior appears, stop before confirmation and keep the existing published version unchanged. Platform confirmation and publication remain user-controlled actions.
+Upload the archive in the Skills section of the existing remote-MCP draft. Wait for the safety scan to pass, review the retained skill, and repeat the submission checks. Platform confirmation and publication remain user-controlled actions.
 
 After Platform publication, install the exact published version in a clean profile, start a fresh task, connect through OAuth, and repeat the account-wide save/find/get/open acceptance above.
 
