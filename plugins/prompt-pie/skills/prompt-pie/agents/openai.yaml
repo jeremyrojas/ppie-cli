@@ -1,7 +1,7 @@
 interface:
   display_name: "Prompt Pie"
   short_description: "Save, find prompts and skills"
-  default_prompt: "Find a prompt or skill in my Prompt Pie account."
+  default_prompt: "Use $prompt-pie to find a prompt or skill in my Prompt Pie account."
 
 policy:
   allow_implicit_invocation: true
