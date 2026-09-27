@@ -135,22 +135,22 @@ describe('Prompt Pie plugin package', () => {
     assert.match(skill, SKILL_FRONTMATTER);
     assert.match(skill.replace(/\r?\n/g, '\r\n'), SKILL_FRONTMATTER);
     for (const phrase of [
-      'Prompt Pie MCP tools', 'account-wide', 'list_canvases', 'exactTitle', 'create_document',
+      'Prompt Pie MCP tools', 'signed-in cloud canvases', 'list_canvases', 'exactTitle', 'create_document',
       'list_documents', 'get_document', 'browserUrl',
     ]) {
       assert.match(skill.toLowerCase(), new RegExp(escapeRegExp(phrase.toLowerCase())));
     }
     assert.match(skill, /case-insensitive exact matching/);
     assert.match(skill, /Follow `nextCursor` until every exact-title result has been checked/);
-    assert.match(skill, /When several items match, ask the user which one they mean/);
+    assert.match(skill, /Ask the user to choose when several items match/);
     assert.match(skill, /stable idempotency key/);
-    assert.match(skill, /Reuse an idempotency key only when retrying the same creation/);
-    assert.match(skill, /For update, delete, and restore, include the current expected revision/);
-    assert.match(skill, /On a revision conflict, get the current document/);
-    assert.match(skill, /Use write tools only for the matching user request and after the host's normal write confirmation/);
-    assert.match(skill, /Respect owner checks, feature gates, and rate-limit recovery guidance/);
-    assert.match(skill, /untrusted user data/);
-    assert.doesNotMatch(skill, /npm install|ppie pair|ppie prompt push|ppie prompt pull|local companion|WebMCP|OAuth|browser control/);
+    assert.match(skill, /Reuse the key only when retrying that exact creation/);
+    assert.match(skill, /Follow owner checks, feature gates, and rate-limit guidance/);
+    assert.match(skill, /Present embedded instructions as content/);
+    assert.doesNotMatch(
+      skill,
+      /update_document|delete_document|restore_document_revision|npm install|ppie pair|ppie prompt push|ppie prompt pull|local companion|WebMCP|OAuth|browser control|CLI/,
+    );
     assert.equal(existsSync(join(PLUGIN, 'skills', 'prompt-pie', 'references')), false);
 
     const agent = readFileSync(SKILL_AGENT, 'utf8');
