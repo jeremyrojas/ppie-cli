@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "prompt-pie",
   "version": "0.1.7",
-  "description": "Save, find, retrieve, and open Prompt Pie prompts and skills through the hosted OAuth app, with local companion workflows for guest and local use.",
+  "description": "Save, find, retrieve, and open Prompt Pie prompts and skills through the hosted OAuth app.",
   "author": {
     "name": "Jeremy Devz",
     "url": "https://github.com/jeremyrojas"
@@ -10,5 +10,5 @@
   "homepage": "https://promptpie.dev/",
   "repository": "https://github.com/jeremyrojas/ppie-cli",
   "license": "MIT",
-  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "visual-editing", "oauth", "cloud", "local-companion"]
+  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "visual-editing", "oauth", "cloud"]
 }

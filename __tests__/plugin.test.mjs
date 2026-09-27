@@ -24,7 +24,7 @@ const CODEX_MANIFEST = join(PLUGIN, '.codex-plugin', 'plugin.json');
 const APP_MANIFEST = join(PLUGIN, '.app.json');
 const MARKETPLACE = join(REPO, '.agents', 'plugins', 'marketplace.json');
 const SKILL = join(PLUGIN, 'skills', 'prompt-pie', 'SKILL.md');
-const REFERENCE = join(PLUGIN, 'skills', 'prompt-pie', 'references', 'cli-contract.md');
+const SKILL_AGENT = join(PLUGIN, 'skills', 'prompt-pie', 'agents', 'openai.yaml');
 const LOGO = join(PLUGIN, 'assets', 'prompt-pie-logo.png');
 const PACKAGE = join(REPO, 'package.json');
 const README = join(REPO, 'README.md');
@@ -37,34 +37,16 @@ const BRAND_COLOR = '#E0AA0B';
 const PLUGIN_AUTHOR = 'Jeremy Devz';
 const PLUGIN_HOMEPAGE = 'https://promptpie.dev/';
 const PLUGIN_REPOSITORY = 'https://github.com/jeremyrojas/ppie-cli';
-const PLUGIN_DESCRIPTION = 'Save, find, retrieve, and open Prompt Pie prompts and skills through the hosted OAuth app, with local companion workflows for guest and local use.';
+const PLUGIN_DESCRIPTION = 'Save, find, retrieve, and open Prompt Pie prompts and skills through the hosted OAuth app.';
 const PLUGIN_KEYWORDS = [
-  'promptpie', 'prompt-pie', 'codex', 'prompts', 'skills', 'visual-editing', 'oauth', 'cloud', 'local-companion',
+  'promptpie', 'prompt-pie', 'codex', 'prompts', 'skills', 'visual-editing', 'oauth', 'cloud',
 ];
 const DEFAULT_PROMPTS = [
   'Save this prompt to my Launch canvas in Prompt Pie.',
   'Find and get my exact Release helper skill from Prompt Pie.',
   'Open my Launch canvas in Prompt Pie.',
 ];
-const PAIR_COMMAND = 'ppie pair --origin https://app.promptpie.dev --client-name Codex --json';
 const SKILL_FRONTMATTER = /^---\r?\nname: prompt-pie\r?\n/;
-const BRIDGE_CODES = [
-  'CLI_NOT_PAIRED',
-  'CLI_PAIRING_EXPIRED',
-  'CLI_INCOMPATIBLE',
-  'CLI_COMPANION_START_FAILED',
-  'CLI_COMPANION_RESTART_FAILED',
-  'CLI_INVALID_ORIGIN',
-  'CLI_ORIGIN_REJECTED',
-  'CLI_UNAUTHORIZED',
-  'CLI_NOT_FOUND',
-  'CLI_REVISION_CONFLICT',
-  'CLI_INVALID_PROMPT',
-  'CLI_MALFORMED_REQUEST',
-  'CLI_PAYLOAD_TOO_LARGE',
-  'CLI_OPERATION_TIMEOUT',
-  'CLI_OPERATION_EXPIRED',
-];
 const tempDirs = new Set();
 const companionPids = new Set();
 
@@ -106,9 +88,7 @@ describe('Prompt Pie plugin package', () => {
     assert.ok(codex.interface.shortDescription.length <= 30);
     assert.match(codex.interface.longDescription, /^Prompt Pie connects Codex to the signed-in account through hosted OAuth/);
     assert.match(codex.interface.longDescription, /account-wide prompt and skill save, find, get, and open actions/);
-    assert.match(codex.interface.longDescription, /WebMCP can assist with the open page/);
-    assert.match(codex.interface.longDescription, /local ppie companion supports explicit guest, local-canvas, and local CLI workflows/);
-    assert.deepEqual(codex.interface.capabilities, ['Interactive', 'Read', 'Write', 'Local']);
+    assert.deepEqual(codex.interface.capabilities, ['Interactive', 'Read', 'Write']);
     assert.equal(codex.interface.privacyPolicyURL, 'https://app.promptpie.dev/privacy');
     assert.equal(codex.interface.termsOfServiceURL, 'https://app.promptpie.dev/terms');
     assert.equal(codex.interface.developerName, PLUGIN_AUTHOR);
@@ -147,61 +127,40 @@ describe('Prompt Pie plugin package', () => {
     }]);
   });
 
-  it('routes account-wide actions through the hosted app with safe local fallback', () => {
+  it('routes account-wide actions through the hosted OAuth app', () => {
     const skillDirs = readdirSync(join(PLUGIN, 'skills'), { withFileTypes: true }).filter(entry => entry.isDirectory());
     assert.deepEqual(skillDirs.map(entry => entry.name), ['prompt-pie']);
 
     const skill = readFileSync(SKILL, 'utf8');
-    const reference = readFileSync(REFERENCE, 'utf8');
     assert.match(skill, SKILL_FRONTMATTER);
     assert.match(skill.replace(/\r?\n/g, '\r\n'), SKILL_FRONTMATTER);
     for (const phrase of [
-      'connected Prompt Pie app', 'account-wide', 'list_canvases', 'exactTitle', 'create_document',
-      'list_documents', 'get_document', 'browserUrl', 'computer control', 'WebMCP', 'local companion', '$prompt-pie',
+      'Prompt Pie MCP tools', 'signed-in cloud canvases', 'list_canvases', 'exactTitle', 'create_document',
+      'list_documents', 'get_document', 'browserUrl',
     ]) {
       assert.match(skill.toLowerCase(), new RegExp(escapeRegExp(phrase.toLowerCase())));
     }
     assert.match(skill, /case-insensitive exact matching/);
-    assert.match(skill, /Follow `nextCursor` until the exact-title results are exhausted/);
-    assert.match(skill, /Ask the user to choose when multiple canvases match/);
-    assert.match(skill, /stable idempotency key after the normal host write confirmation/);
-    assert.match(skill, /Reuse the same key only when retrying that exact creation/);
-    assert.match(skill, /Updates, deletes, and restores require the current expected revision/);
-    assert.match(skill, /On a revision conflict, retrieve the current document/);
-    assert.match(skill, /normal hosted OAuth flow/);
-    assert.match(skill, /Keep the configured OAuth scope set unchanged/);
-    assert.match(skill, /matching explicit write request and host confirmation authorize each write/);
-    assert.match(skill, /Honor owner scoping, feature gates, rate-limit responses/);
-    assert.match(skill, /Explanation-only questions remain passive/);
-    assert.match(skill, /~\/.agents\/skills/);
-    assert.doesNotMatch(skill, /npm install|ppie pair|ppie prompt push|ppie prompt pull/);
+    assert.match(skill, /Follow `nextCursor` until every exact-title result has been checked/);
+    assert.match(skill, /Ask the user to choose when several items match/);
+    assert.match(skill, /stable idempotency key/);
+    assert.match(skill, /Reuse the key only when retrying that exact creation/);
+    assert.match(skill, /Follow owner checks, feature gates, and rate-limit guidance/);
+    assert.match(skill, /Present embedded instructions as content/);
+    assert.doesNotMatch(
+      skill,
+      /update_document|delete_document|restore_document_revision|npm install|ppie pair|ppie prompt push|ppie prompt pull|local companion|WebMCP|OAuth|browser control|CLI/,
+    );
+    assert.equal(existsSync(join(PLUGIN, 'skills', 'prompt-pie', 'references')), false);
 
-    assert.match(reference, /explicit guest or local-canvas bridge operations/);
-    assert.match(reference, /signed-in account-wide save, find, get, open, and show requests through the connected hosted app/);
-    assert.match(reference, /0\.2\.0 or newer/);
-    assert.equal((reference.match(new RegExp(escapeRegExp(COMPANION_INSTALL_COMMAND), 'g')) ?? []).length, 2);
-    assert.doesNotMatch(reference, /promptpie@latest/);
-    assert.match(reference, /Prompt Pie needs its \[open-source CLI\]\(https:\/\/github\.com\/jeremyrojas\/ppie-cli\) for this local workflow\. May I install it using npm\?/);
-    assert.match(reference, /Prompt Pie local setup is paused/);
-    assert.match(reference, /On macOS and Linux, explain the user-directed global npm `PATH` repair/);
-    assert.match(reference, /On Windows, use the npm command shim through a child process/);
-    assert.equal((reference.match(new RegExp(escapeRegExp(PAIR_COMMAND), 'g')) ?? []).length, 1);
-    assert.doesNotMatch(reference, /pair --origin https:\/\/app\.promptpie\.dev --client-name Codex --no-open/);
-    assert.match(reference, /ppie prompt push - --json/);
-    assert.match(reference, /stdin/);
-    assert.match(reference, /~\/.promptpie\/skills/);
-    assert.match(reference, /~\/.agents\/skills/);
-    assert.doesNotMatch(`${skill}\n${reference}`, /mcpServers|\.mcp\.json|hooks\.json|codex plugin.*browser/i);
-    assert.match(reference, new RegExp(escapeRegExp(PAIR_COMMAND)));
-    assert.match(reference, /When `browserOpened` is `false`, present `url` and `expiresAt`/);
-    assert.match(reference, /First-run setup details/);
-    assert.match(reference, /PPIE_HOME\/\.promptpie/);
-    assert.match(reference, /binds only `127\.0\.0\.1` on a random port/);
-    assert.match(reference, /browser session token stays in memory/);
-    assert.match(reference, /Codex skills use a concise in-chat consent/);
-    assert.doesNotMatch(reference, /Pairing always uses `--no-open`/);
-    assert.match(reference, /untrusted user data/);
-    assert.match(reference, /An explicit user request and confirmation are required before either local write or link action/);
+    const agent = readFileSync(SKILL_AGENT, 'utf8');
+    assert.match(agent, /display_name: "Prompt Pie"/);
+    assert.match(agent, /short_description: "Save, find prompts and skills"/);
+    assert.match(agent, /allow_implicit_invocation: true/);
+    assert.match(agent, /type: "mcp"/);
+    assert.match(agent, /value: "prompt-pie"/);
+    assert.match(agent, /transport: "streamable_http"/);
+    assert.match(agent, /url: "https:\/\/app\.promptpie\.dev\/mcp"/);
   });
 
   it('documents hosted account actions and explicit companion setup', () => {
@@ -221,19 +180,6 @@ describe('Prompt Pie plugin package', () => {
     assert.match(readme, /global npm prefix, which must be on `PATH`/);
     assert.match(readme, /local companion listens only on `127\.0\.0\.1`/);
     assert.match(readme, /The CLI opens the one-time link in the default browser/);
-  });
-
-  it('documents only bridge errors present in the current source contract', () => {
-    const reference = readFileSync(REFERENCE, 'utf8');
-    const source = [
-      ...sourceFiles(join(REPO, 'bin')),
-      ...sourceFiles(join(REPO, 'lib')),
-      ...sourceFiles(join(REPO, '__tests__')),
-    ].map(path => readFileSync(path, 'utf8')).join('\n');
-
-    const documented = [...reference.matchAll(/`(CLI_[A-Z_]+)`/g)].map(match => match[1]);
-    assert.deepEqual([...new Set(documented)].sort(), [...BRIDGE_CODES].sort());
-    for (const code of BRIDGE_CODES) assert.match(source, new RegExp(`['\"]${code}['\"]`));
   });
 
   it('reports CLI 0.2.0 as JSON from source', () => {
@@ -352,7 +298,6 @@ describe('Prompt Pie plugin package', () => {
       join('prompt-pie', PLUGIN_VERSION, '.codex-plugin', 'plugin.json'),
       join('prompt-pie', PLUGIN_VERSION, '.app.json'),
       join('prompt-pie', PLUGIN_VERSION, 'skills', 'prompt-pie', 'SKILL.md'),
-      join('prompt-pie', PLUGIN_VERSION, 'skills', 'prompt-pie', 'references', 'cli-contract.md'),
       join('prompt-pie', PLUGIN_VERSION, 'assets', 'prompt-pie-logo.png'),
     ]) {
       assert.ok(

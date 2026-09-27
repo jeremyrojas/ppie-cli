@@ -1,7 +1,7 @@
 {
   "name": "prompt-pie",
   "version": "0.1.7",
-  "description": "Save, find, retrieve, and open Prompt Pie prompts and skills through the hosted OAuth app, with local companion workflows for guest and local use.",
+  "description": "Save, find, retrieve, and open Prompt Pie prompts and skills through the hosted OAuth app.",
   "author": {
     "name": "Jeremy Devz",
     "url": "https://github.com/jeremyrojas"
@@ -9,16 +9,16 @@
   "homepage": "https://promptpie.dev/",
   "repository": "https://github.com/jeremyrojas/ppie-cli",
   "license": "MIT",
-  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "visual-editing", "oauth", "cloud", "local-companion"],
+  "keywords": ["promptpie", "prompt-pie", "codex", "prompts", "skills", "visual-editing", "oauth", "cloud"],
   "skills": "./skills/",
   "apps": "./.app.json",
   "interface": {
     "displayName": "Prompt Pie",
     "shortDescription": "Save, find prompts and skills",
-    "longDescription": "Prompt Pie connects Codex to the signed-in account through hosted OAuth for account-wide prompt and skill save, find, get, and open actions. Returned browser links open the owned canvas and focus the selected item. WebMCP can assist with the open page, and the local ppie companion supports explicit guest, local-canvas, and local CLI workflows.",
+    "longDescription": "Prompt Pie connects Codex to the signed-in account through hosted OAuth for account-wide prompt and skill save, find, get, and open actions. Returned browser links open the owned canvas and focus the selected item.",
     "developerName": "Jeremy Devz",
     "category": "Productivity",
-    "capabilities": ["Interactive", "Read", "Write", "Local"],
+    "capabilities": ["Interactive", "Read", "Write"],
     "privacyPolicyURL": "https://app.promptpie.dev/privacy",
     "termsOfServiceURL": "https://app.promptpie.dev/terms",
     "brandColor": "#E0AA0B",

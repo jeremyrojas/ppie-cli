@@ -1,0 +1,15 @@
+interface:
+  display_name: "Prompt Pie"
+  short_description: "Save, find prompts and skills"
+  default_prompt: "Use $prompt-pie to find a prompt or skill in my Prompt Pie account."
+
+policy:
+  allow_implicit_invocation: true
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "prompt-pie"
+      description: "Save, find, retrieve, and open prompts, skills, and canvases in the user's Prompt Pie account."
+      transport: "streamable_http"
+      url: "https://app.promptpie.dev/mcp"
